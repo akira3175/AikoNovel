@@ -2,11 +2,15 @@ import React from 'react';
 import { Box } from '@mui/material';
 import CustomButton from './CustomButton';
 
-const AuthButtons: React.FC = () => (
+interface AuthButtonsProps {
+  onLoginClick: () => void;
+}
+
+const AuthButtons: React.FC<AuthButtonsProps> = ({ onLoginClick }) => (
   <Box>
     <CustomButton 
       variant="login" 
-      onClick={() => console.log('Login clicked')}
+      onClick={onLoginClick}
       style={{ marginRight: '10px' }}
     >
       Đăng nhập
