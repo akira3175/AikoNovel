@@ -1,4 +1,5 @@
 from django.contrib import admin
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import * 
 
 class UserAdmin(admin.ModelAdmin):
