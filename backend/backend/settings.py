@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'user',
 ]
 
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -80,13 +82,16 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': config('MONGO_DB'),  # Tên database
+        'NAME': config('MONGO_DB'), 
         'CLIENT': {
-            'host': config('MONGO_URI'),  # Toàn bộ URI kết nối
+            'host': config('MONGO_URI'), 
         }
     }
 }
 
+
+#CORS setup
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Password validation

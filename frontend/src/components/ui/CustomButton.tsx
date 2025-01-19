@@ -1,14 +1,14 @@
 import React from 'react';
-import { Button as MuiButton, ButtonProps as MuiButtonProps } from '@mui/material';
+import { Button, ButtonProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 type CustomVariant = 'login' | 'signup' | 'default';
 
-interface CustomButtonProps extends Omit<MuiButtonProps, 'variant'> {
+interface CustomButtonProps extends Omit<ButtonProps, 'variant'> {
   variant?: CustomVariant;
 }
 
-const StyledButton = styled(MuiButton)<{ customVariant?: CustomVariant }>(({ theme, customVariant }) => ({
+const StyledButton = styled(Button)<{ customVariant?: CustomVariant }>(({ theme, customVariant }) => ({
   display: 'inline-flex',
   position: 'relative',
   alignItems: 'center',
@@ -22,6 +22,7 @@ const StyledButton = styled(MuiButton)<{ customVariant?: CustomVariant }>(({ the
   borderRadius: '0.4rem',
   padding: '8px 16px',
   transition: 'all 0.3s ease',
+  minWidth: '120px', // Ensure both buttons have the same minimum width
 
   ...(customVariant === 'login' && {
     backgroundColor: 'hsla(240, 7%, 70%, .22)',
@@ -34,20 +35,23 @@ const StyledButton = styled(MuiButton)<{ customVariant?: CustomVariant }>(({ the
 
   ...(customVariant === 'signup' && {
     backgroundColor: '#039be5',
-    color: 'white !important',
+    color: 'white',
     '&:hover': {
       backgroundColor: '#0288d1',
     },
   }),
 
   ...(customVariant === 'default' && {
-    // You can define default styles here if needed
     backgroundColor: theme.palette.grey[200],
     color: theme.palette.text.primary,
     '&:hover': {
       backgroundColor: theme.palette.grey[300],
     },
   }),
+
+  [theme.breakpoints.down('sm')]: {
+    width: '100%', // Make buttons full width on mobile
+  },
 }));
 
 const CustomButton: React.FC<CustomButtonProps> = ({ children, variant = 'default', ...props }) => {

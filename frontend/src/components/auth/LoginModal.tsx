@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import {
   Modal,
   Box,
@@ -8,8 +7,10 @@ import {
   Button,
   Link,
   styled,
+  Theme,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { login } from '../../services/auth';
 
 const StyledModal = styled(Modal)({
   display: 'flex',
@@ -17,23 +18,36 @@ const StyledModal = styled(Modal)({
   justifyContent: 'center',
 });
 
-const ModalContent = styled(Box)({
-  backgroundColor: '#fff',
-  borderRadius: '24px',
-  boxShadow: '0 12px 32px 4px rgba(0, 0, 0, .04), 0 8px 20px rgba(0, 0, 0, .08)',
-  padding: '32px',
-  width: '400px',
-  maxWidth: '90%',
-  position: 'relative',
-});
+const ModalContent = styled(Box)(({ theme }) => ({
+    backgroundColor: '#fff',
+    borderRadius: '24px',
+    boxShadow: '0 12px 32px 4px rgba(0, 0, 0, .04), 0 8px 20px rgba(0, 0, 0, .08)',
+    padding: '32px',
+    width: '400px',
+    maxWidth: '90%',
+    position: 'relative',
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+    },
+  }));
 
-const Logo = styled('div')({
-  backgroundImage: 'url(/images/logo/main-logo-1.png)',
-  backgroundSize: 'cover',
-  width: '60px',
-  height: '60px',
-  margin: '-8px auto 18px auto',
-});
+  const Logo = styled('div')(({ theme }) => ({
+    backgroundImage: 'url(/images/logo/main-logo-1.png)',
+    backgroundSize: 'cover',
+    width: '60px',
+    height: '60px',
+    margin: '-8px auto 18px auto',
+    [theme.breakpoints.down('sm')]: {
+      width: '80px',
+      height: '80px',
+      margin: '0 auto 24px auto',
+    },
+  }));
 
 const CloseButton = styled(CloseIcon)({
   position: 'absolute',
@@ -58,12 +72,13 @@ const StyledButton = styled(Button)({
 });
 
 interface LoginModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSwitchToRegister: () => void;
-}
+    open: boolean;
+    onClose: () => void;
+    onLogin: (username: string, password: string) => void;
+    onSwitchToRegister: () => void;
+  }  
 
-const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onSwitchToRegister }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -73,13 +88,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onSwitchToRegist
     setError('');
 
     try {
-      const response = await axios.post('/user/token/', { username, password });
-      const { access, refresh } = response.data;
-      
-      // Store tokens in localStorage
-      localStorage.setItem('accessToken', access);
-      localStorage.setItem('refreshToken', refresh);
+      await login(username, password);
 
+      onLogin(username, password);
       // Close the modal and update app state (you might want to lift this state up)
       onClose();
     } catch (err) {

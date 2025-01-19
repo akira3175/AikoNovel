@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { InputBase, IconButton, styled } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
-const SearchForm = styled('form')({
+const SearchForm = styled('form')(({ theme }) => ({
   position: 'relative',
   width: '210px',
   height: '36px',
@@ -13,7 +13,12 @@ const SearchForm = styled('form')({
   marginInlineEnd: '25px',
   display: 'flex',
   alignItems: 'center',
-});
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    marginInlineEnd: '0',
+    marginBottom: theme.spacing(1),
+  },
+}));
 
 const SearchInput = styled(InputBase)({
   flex: 1,
