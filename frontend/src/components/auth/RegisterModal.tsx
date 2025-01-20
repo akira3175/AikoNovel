@@ -178,6 +178,26 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ open, onClose, onRegister
     setShowFailureModal(false)
   }
 
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+    }
+  }, [open]);
+  
+  const resetForm = () => {
+    setUsername('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setErrors({
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      general: '',
+    });
+  };  
+
   return (
     <>
       <StyledModal open={open} onClose={onClose}>

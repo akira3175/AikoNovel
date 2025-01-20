@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   Box,
@@ -108,6 +108,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitc
   const handleFailureModalClose = () => {
     setShowFailureModal(false)
   }
+
+  useEffect(() => {
+    if (!open) {
+      setUsername('');
+      setPassword('');
+      setError('');
+    }
+  }, [open]);
 
   return (
     <>
