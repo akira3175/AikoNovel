@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   fetchUserInfo: () => Promise<void>;
+  register: (username: string, email: string, password: string, confirmPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,8 +70,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const register = async (username: string, email: string, password: string, confirmPassword: string) => {
+    try {
+      await authService.register(username, email, password, confirmPassword);
+    } catch (error) {
+      console.error('Registration failed:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, fetchUserInfo }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, fetchUserInfo, register }}>
       {children}
     </AuthContext.Provider>
   );
@@ -83,4 +93,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

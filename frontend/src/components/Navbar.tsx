@@ -3,7 +3,7 @@ import {
   AppBar, Toolbar, Container, IconButton, 
   Drawer, List, ListItemButton, ListItemText, 
   useMediaQuery, Avatar, Menu, MenuItem, 
-  Typography, Box, Divider
+  Typography, Box, Divider, CircularProgress,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -12,7 +12,9 @@ import Logo from './ui/Logo';
 import NavLinks from './ui/NavLinks';
 import SearchBar from './ui/SearchBar';
 import AuthButtons from './ui/AuthButtons';
+import { GradientCircularProgress } from "./ui/GradientCircularProgress"
 import LoginModal from './auth/LoginModal';
+import RegisterModal from './auth/RegisterModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -51,33 +53,76 @@ const DrawerContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
 }));
 
+const LoadingOverlay = styled(Box)(({ theme }) => ({
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: theme.zIndex.modal + 1,
+}))
+
 const Navbar: React.FC = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isLoading, setIsLoading] = useState(false)
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const { user, isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated, user, login, logout, register } = useAuth()
 
   const handleOpenLoginModal = () => {
     setLoginModalOpen(true);
     setDrawerOpen(false);
   };
 
+  const handleOpenRegisterModal = () => {
+    setRegisterModalOpen(true)
+    setLoginModalOpen(false)
+    setDrawerOpen(false)
+  }
+
   const handleCloseLoginModal = () => {
     setLoginModalOpen(false);
   };
 
-  const handleLogin = async (username: string, password: string) => {
+  const handleCloseRegisterModal = () => {
+    setRegisterModalOpen(false)
+  }
+
+  const handleLogin = async (username: string, password: string): Promise<boolean>=> {
+    setIsLoading(true);
     try {
       await login(username, password);
       handleCloseLoginModal();
+      return true;
     } catch (error) {
       console.error('Login failed:', error);
-      // Handle login error (e.g., show an error message to the user)
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleRegister = async (username: string, email: string, password: string, confirmPassword: string): Promise<boolean> => {
+    setIsLoading(true)
+    try {
+      await register(username, email, password, confirmPassword)
+      handleCloseRegisterModal()
+      return true;
+    } catch (error) {
+      console.log('Register failed: ', error)
+      return false;
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     logout();
@@ -93,8 +138,9 @@ const Navbar: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleSwitchToRegister = () => {
-    console.log('Switching to register modal');
+  const handleSwitch = () => {
+    setLoginModalOpen(!loginModalOpen);
+    setRegisterModalOpen(!registerModalOpen);
   };  
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -148,7 +194,7 @@ const Navbar: React.FC = () => {
         </List>
       ) : (
         <Box mt={2}>
-          <AuthButtons onLoginClick={handleOpenLoginModal} />
+          <AuthButtons onLoginClick={handleOpenLoginModal} onRegisterClick={handleOpenRegisterModal} />
         </Box>
       )}
     </DrawerContent>
@@ -188,7 +234,7 @@ const Navbar: React.FC = () => {
                       </Menu>
                     </>
                   ) : (
-                    <AuthButtons onLoginClick={handleOpenLoginModal} />
+                    <AuthButtons onLoginClick={handleOpenLoginModal} onRegisterClick={handleOpenRegisterModal}/>
                   )}
                 </>
               )}
@@ -217,8 +263,21 @@ const Navbar: React.FC = () => {
         open={loginModalOpen}
         onClose={handleCloseLoginModal}
         onLogin={handleLogin}
-        onSwitchToRegister={handleSwitchToRegister}
+        onSwitchToRegister={handleSwitch}
+        isLoading={isLoading}
       />
+      <RegisterModal
+        open={registerModalOpen}
+        onClose={handleCloseRegisterModal}
+        onRegister={handleRegister}
+        onSwitchToLogin={handleSwitch}
+        isLoading={isLoading}
+      />
+      {isLoading && (
+        <LoadingOverlay>
+          <GradientCircularProgress />
+        </LoadingOverlay>
+      )}
     </>
   );
 };

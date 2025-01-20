@@ -5,10 +5,11 @@ import CustomButton from './CustomButton';
 
 interface AuthButtonsProps {
     onLoginClick: () => void;
+    onRegisterClick: () => void;
   }
   
 
-const AuthButtons: React.FC<AuthButtonsProps> = ({ onLoginClick }) => {
+const AuthButtons: React.FC<AuthButtonsProps> = ({ onLoginClick, onRegisterClick }) => {
     const theme = useTheme();
   
     const ButtonContainer = styled(Box)({
@@ -30,7 +31,7 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ onLoginClick }) => {
         </CustomButton>
         <CustomButton 
           variant="signup" 
-          onClick={() => console.log('Register clicked')}
+          onClick={onRegisterClick}
           style={{ marginRight: '10px', marginBottom: '10px', marginTop: '10px'  }}
         >
           Đăng ký

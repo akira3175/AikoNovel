@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { validateUsername, validateEmail, validatePassword, 
+  validateConfirmPassword } from "../utils/validation"
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -82,6 +84,43 @@ export const login = async (username: string, password: string) => {
     throw new Error('Invalid username or password');
   }
 };
+
+// Register 
+export const register = async (
+  username: string,
+  email: string,
+  password: string,
+  confirmPassword: string,
+): Promise<void> => {
+  try {
+    const usernameError = await validateUsername(username);
+    if (usernameError) throw new Error(usernameError);
+
+    const emailError = await validateEmail(email);
+    if (emailError) throw new Error(emailError);
+
+    const passwordError = validatePassword(password);
+    if (passwordError) throw new Error(passwordError);
+
+    const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
+    if (confirmPasswordError) throw new Error(confirmPasswordError);
+
+    const response = await axios.post(`${API_URL}/user/register/`, {
+      username,
+      email,
+      password,
+    });
+
+    if (response.status !== 201) {
+      throw new Error('Registration failed. Please try again.');
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Registration failed. Please try again.');
+    }
+    throw new Error('An unexpected error occurred. Please try again.');
+  }
+}
 
 // Logout and clear tokens from localStorage
 export const logout = () => {

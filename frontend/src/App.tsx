@@ -22,6 +22,12 @@ const theme = createTheme({
       xl: 1920,
     },
   },
+  palette: {
+    primary: {
+      main: '#039be5',
+      contrastText: '#fff',
+    },
+  },
 });
 
 const AppContent: React.FC = () => {

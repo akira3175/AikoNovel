@@ -7,10 +7,10 @@ import {
   Button,
   Link,
   styled,
-  Theme,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import { login } from '../../services/auth';
+import SuccessModal from '../ui/SuccessModal';
+import FailureModal from '../ui/FailureModal';
 
 const StyledModal = styled(Modal)({
   display: 'flex',
@@ -74,31 +74,43 @@ const StyledButton = styled(Button)({
 interface LoginModalProps {
     open: boolean;
     onClose: () => void;
-    onLogin: (username: string, password: string) => void;
+    onLogin: (username: string, password: string) => Promise<boolean>;
     onSwitchToRegister: () => void;
+    isLoading: boolean
   }  
 
-const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitchToRegister }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitchToRegister, isLoading }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showFailureModal, setShowFailureModal] = useState(false)
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    try {
-      await login(username, password);
+    const success = await onLogin(username, password); // Gọi hàm cha
 
-      onLogin(username, password);
-      // Close the modal and update app state (you might want to lift this state up)
-      onClose();
-    } catch (err) {
-      setError('Invalid username or password');
+    if (success) {
+      setShowSuccessModal(true)
+    } else {
+      setShowFailureModal(true)
+      setError("Invalid username or password")
     }
   };
 
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false)
+    onClose()
+  }
+
+  const handleFailureModalClose = () => {
+    setShowFailureModal(false)
+  }
+
   return (
+    <>
     <StyledModal open={open} onClose={onClose}>
       <ModalContent>
         <CloseButton onClick={onClose} />
@@ -113,6 +125,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitc
             variant="outlined"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            disabled={isLoading}
             error={!!error}
           />
           <StyledTextField
@@ -122,6 +135,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitc
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
             error={!!error}
           />
           {error && (
@@ -129,7 +143,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitc
               {error}
             </Typography>
           )}
-          <StyledButton type="submit" variant="contained" color="primary">
+          <StyledButton type="submit" variant="contained" color="primary" disabled={isLoading}>
             Đăng Nhập
           </StyledButton>
         </form>
@@ -146,6 +160,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onLogin, onSwitc
         </Typography>
       </ModalContent>
     </StyledModal>
+    <SuccessModal open={showSuccessModal} onClose={handleSuccessModalClose} message="Đăng nhập thành công!" />
+    <FailureModal
+      open={showFailureModal}
+      onClose={handleFailureModalClose}
+      message="Đăng nhập thất bại. Vui lòng thử lại."
+    />
+    </>
   );
 };
 
