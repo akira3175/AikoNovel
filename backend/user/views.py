@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .models import UserInfo
+from .serializers import *
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -44,3 +45,29 @@ class LoginAPIView(APIView):
             return Response({
                 "message": "Invalid username or password"
             }, status=status.HTTP_401_UNAUTHORIZED)
+        
+class RegisterView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CheckUsernameView(APIView):
+    def get(self, request, *args, **kwargs):
+        username = request.query_params.get('username', None)
+        if username is None:
+            return Response({'error': 'Username parameter is required'}, status=400)
+        
+        exists = User.objects.filter(username=username).exists()
+        return Response({'exists': exists})
+
+class CheckEmailView(APIView):
+    def get(self, request, *args, **kwargs):
+        email = request.query_params.get('email', None)
+        if email is None:
+            return Response({'error': 'Email parameter is required'}, status=400)
+        
+        exists = User.objects.filter(email=email).exists()
+        return Response({'exists': exists})
