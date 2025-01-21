@@ -1,9 +1,10 @@
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Link } from 'react-router-dom';
-import { Box, Typography, List, ListItem, ListItemText } from "@mui/material"
+import { Link } from "react-router-dom"
+import { Box, Typography, List, ListItem, ListItemText, Paper } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import axios from "axios"
+import ListItemLink from "../ui/ListItemLink"
 
 const API_URL = process.env.REACT_APP_API_URL
 
@@ -12,10 +13,15 @@ interface Group {
   groupname: string
 }
 
-const GroupsContainer = styled(Box)(({ theme }) => ({
-  marginTop: theme.spacing(4),
-  width: "100%",
-  maxWidth: "600px",
+const GroupsContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  height: "100%",
+}))
+
+const StyledListItem = styled(ListItem)(({ theme }) => ({
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+  },
 }))
 
 const Groups: React.FC<{ username: string }> = ({ username }) => {
@@ -34,15 +40,15 @@ const Groups: React.FC<{ username: string }> = ({ username }) => {
   }, [username])
 
   return (
-    <GroupsContainer>
+    <GroupsContainer elevation={3}>
       <Typography variant="h6" gutterBottom>
         Nhóm đã tham gia
       </Typography>
-      <List>
+      <List dense>
         {groups.map((group) => (
-          <ListItem key={group.id} component={Link} to={`/group/${group.id}`}>
-            <ListItemText primary={group.groupname} />
-          </ListItem>
+           <ListItemLink to={`/group/${group.id}`} key={group.id}>
+           <ListItemText primary={group.groupname} />
+         </ListItemLink>
         ))}
       </List>
     </GroupsContainer>
