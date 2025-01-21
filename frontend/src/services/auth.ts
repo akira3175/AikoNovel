@@ -67,6 +67,34 @@ export const refreshToken = async () => {
   }
 };
 
+// Axios Interceptor for automatic token refresh
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      try {
+        const newAccessToken = await refreshToken();
+        error.config.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        return axios(error.config); // Retry the original request with the new token
+      } catch (refreshError) {
+        console.error('Failed to refresh token:', refreshError);
+        handleAuthError();
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Handle authentication errors
+export const handleAuthError = () => {
+  alert("Session expired. Please log in again.");
+  removeAccessToken();
+  removeRefreshToken();
+  setAuthToken('');
+  window.location.href = "/login"; // Redirect to login page
+};
+
 // Login and save tokens to localStorage
 export const login = async (username: string, password: string) => {
   try {
@@ -135,7 +163,6 @@ export const fetchUserInfo = async () => {
     const token = getAccessToken();
     if (!token) throw new Error('No access token available');
 
-    // Set the Authorization header with the current token
     setAuthToken(token);
     const response = await axios.get(`${API_URL}/user/info/`);
     return response.data;
@@ -162,3 +189,4 @@ export const fetchUserInfo = async () => {
     }
   }
 };
+

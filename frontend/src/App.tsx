@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import './App.css';
 
 import Base from './pages/Base';
+import Profile from './pages/Profile';
 // We'll uncomment these imports once we create the corresponding components
 // import Home from './pages/Home';
 // import List from './pages/List';
@@ -42,6 +43,7 @@ const AppContent: React.FC = () => {
               element={
                 <Base>
                   <Routes>
+                    <Route path="/profile/:username" element={<Profile />} />
                     {/* We'll uncomment these routes once we create the corresponding components */}
                     {/* <Route path="/" element={<Home />} />
                     <Route path="/list/:type" element={<List />} />

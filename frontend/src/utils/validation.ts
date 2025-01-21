@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000"
+const API_URL = process.env.REACT_APP_API_URL
 
 export const validateUsername = async (username: string): Promise<string> => {
   if (username.length < 8 || username.length > 32) {
