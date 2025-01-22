@@ -20,6 +20,19 @@ AikoNovel is an online novel reading application built with **React** for the fr
 1. Navigate to the `backend` directory: cd backend
 2. Install dependencies: pip install -r requirements.txt
 3. Apply migrations:
-   python manage.py makemigrations
-   python manage.py migrate
+   - python manage.py makemigrations
+   - python manage.py migrate
 4. Start the Django development server: python manage.py runserver
+
+---
+
+## Prerequisites
+- Npm installed (for React).
+- Python 3.8 and pip installed (for Django).
+- Required environment variables (e.g., API keys) should be configured before running.
+
+---
+
+## License
+
+- This project is licensed under the MIT License.
