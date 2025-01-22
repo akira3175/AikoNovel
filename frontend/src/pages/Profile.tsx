@@ -1,6 +1,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
+import { AxiosError } from "axios"
 import {
   Container,
   Box,
@@ -12,6 +13,8 @@ import {
   Paper,
   IconButton,
   Grid,
+  Alert,
+  Snackbar,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import EditIcon from "@mui/icons-material/Edit"
@@ -19,6 +22,8 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt"
 import { fetchProfile, updateFullName, updateAvatar, updateBackground, type ProfileData } from "../services/profile"
 import { useAuth } from "../contexts/AuthContext"
 import Groups from "../components/profile/Groups"
+import { GradientCircularProgress } from "../components/ui/GradientCircularProgress"
+import NotFound from "./NotFound"
 
 const ProfileContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -88,9 +93,8 @@ const ChangeBackgroundButton = styled(IconButton)(({ theme }) => ({
   "&:hover": {
     backgroundColor: theme.palette.background.default,
   },
-  zIndex: 2, // Đảm bảo nút nằm trên các phần tử khác
-}));
-
+  zIndex: 2,
+}))
 
 const ChangeAvatarButton = styled(IconButton)(({ theme }) => ({
   position: "absolute",
@@ -104,14 +108,17 @@ const ChangeAvatarButton = styled(IconButton)(({ theme }) => ({
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>()
-  const { user } = useAuth()
+  const { user, fetchUserInfo } = useAuth()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editedName, setEditedName] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const backgroundInputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -124,31 +131,36 @@ const Profile: React.FC = () => {
           setIsLoading(false)
         } catch (error) {
           console.error("Failed to load profile:", error)
-          setError("Failed to load profile. Please try again.")
+          if (error instanceof AxiosError && error.response?.status === 404) {
+            navigate("/404", { replace: true })
+          } else {
+            setError("Failed to load profile. Please try again.")
+          }
           setIsLoading(false)
         }
       }
     }
     loadProfile()
-  }, [username])
-
+  }, [username, navigate])
   const handleEditProfile = () => {
     setIsEditing(true)
   }
 
   const handleSaveProfile = async () => {
     if (profile && username) {
+      setIsUpdating(true)
       try {
-        setIsLoading(true)
         await updateFullName(editedName)
         const updatedProfile = await fetchProfile(username)
         setProfile(updatedProfile)
         setIsEditing(false)
-        setIsLoading(false)
+        setNotification({ type: "success", message: "Profile updated successfully" })
+        await fetchUserInfo()
       } catch (error) {
         console.error("Failed to update profile:", error)
-        setError("Failed to update profile. Please try again.")
-        setIsLoading(false)
+        setNotification({ type: "error", message: "Failed to update profile. Please try again." })
+      } finally {
+        setIsUpdating(false)
       }
     }
   }
@@ -156,8 +168,8 @@ const Profile: React.FC = () => {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "background") => {
     const file = event.target.files?.[0]
     if (file && profile && username) {
+      setIsUpdating(true)
       try {
-        setIsLoading(true)
         const formData = new FormData()
         formData.append("file", file)
         if (type === "avatar") {
@@ -167,11 +179,16 @@ const Profile: React.FC = () => {
         }
         const updatedProfile = await fetchProfile(username)
         setProfile(updatedProfile)
-        setIsLoading(false)
+        setNotification({
+          type: "success",
+          message: `${type.charAt(0).toUpperCase() + type.slice(1)} updated successfully`,
+        })
+        await fetchUserInfo()
       } catch (error) {
-        console.error("Failed to upload image:", error)
-        setError("Failed to upload image. Please try again.")
-        setIsLoading(false)
+        console.error(`Failed to upload ${type}:`, error)
+        setNotification({ type: "error", message: `Failed to upload ${type}. Please try again.` })
+      } finally {
+        setIsUpdating(false)
       }
     }
   }
@@ -184,21 +201,15 @@ const Profile: React.FC = () => {
     backgroundInputRef.current?.click()
   }
 
+  const handleCloseNotification = () => {
+    setNotification(null)
+  }
+
   if (isLoading) {
     return (
       <ProfileContainer>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
           <CircularProgress />
-        </Box>
-      </ProfileContainer>
-    )
-  }
-
-  if (error) {
-    return (
-      <ProfileContainer>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-          <Typography color="error">{error}</Typography>
         </Box>
       </ProfileContainer>
     )
@@ -218,84 +229,120 @@ const Profile: React.FC = () => {
 
   return (
     <ProfileContainer>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <ProfileHeader elevation={3}>
-            <BackgroundImage $imgUrl={profile.img_background || undefined}>
-              {isCurrentUser && (
-                <ChangeBackgroundButton onClick={triggerBackgroundUpload} size="small">
-                  <CameraAltIcon fontSize="small" />
-                </ChangeBackgroundButton>
-              )}
-            </BackgroundImage>
-            <ProfileContent>
-              <AvatarContainer>
-                <ProfileAvatar src={profile.img_avatar || undefined} alt={profile.full_name}>
-                  {profile.full_name.charAt(0)}
-                </ProfileAvatar>
+      {isLoading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <CircularProgress />
+        </Box>
+      ) : !profile ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Typography>Profile not found.</Typography>
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <ProfileHeader elevation={3}>
+              <BackgroundImage $imgUrl={profile.img_background || undefined}>
                 {isCurrentUser && (
-                  <ChangeAvatarButton onClick={triggerAvatarUpload} size="small">
+                  <ChangeBackgroundButton onClick={triggerBackgroundUpload} size="small">
                     <CameraAltIcon fontSize="small" />
-                  </ChangeAvatarButton>
+                  </ChangeBackgroundButton>
                 )}
-              </AvatarContainer>
-              {isEditing ? (
-                <Box display="flex" alignItems="center">
-                  <TextField
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                  />
-                  <Button onClick={handleSaveProfile} variant="contained" color="primary" sx={{ ml: 1 }}>
-                    Save
-                  </Button>
-                </Box>
-              ) : (
-                <Box display="flex" alignItems="center">
-                  <Typography variant="h5" component="h1">
-                    {profile.full_name}
-                  </Typography>
+              </BackgroundImage>
+              <ProfileContent>
+                <AvatarContainer>
+                  <ProfileAvatar src={profile.img_avatar || undefined} alt={profile.full_name}>
+                    {profile.full_name.charAt(0)}
+                  </ProfileAvatar>
                   {isCurrentUser && (
-                    <IconButton onClick={handleEditProfile} size="small" sx={{ ml: 1 }}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                    <ChangeAvatarButton onClick={triggerAvatarUpload} size="small">
+                      <CameraAltIcon fontSize="small" />
+                    </ChangeAvatarButton>
                   )}
-                </Box>
+                </AvatarContainer>
+                {isEditing ? (
+                  <Box display="flex" alignItems="center">
+                    <TextField
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                    />
+                    <Button onClick={handleSaveProfile} variant="contained" color="primary" sx={{ ml: 1 }}>
+                      Save
+                    </Button>
+                  </Box>
+                ) : (
+                  <Box display="flex" alignItems="center">
+                    <Typography variant="h5" component="h1">
+                      {profile.full_name}
+                    </Typography>
+                    {isCurrentUser && (
+                      <IconButton onClick={handleEditProfile} size="small" sx={{ ml: 1 }}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                )}
+                <Typography variant="subtitle1" color="text.secondary">
+                  @{profile.username}
+                </Typography>
+              </ProfileContent>
+              {isCurrentUser && (
+                <>
+                  <input
+                    ref={avatarInputRef}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    id="avatar-upload"
+                    type="file"
+                    onChange={(e) => handleImageUpload(e, "avatar")}
+                  />
+                  <input
+                    ref={backgroundInputRef}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    id="background-upload"
+                    type="file"
+                    onChange={(e) => handleImageUpload(e, "background")}
+                  />
+                </>
               )}
-              <Typography variant="subtitle1" color="text.secondary">
-                @{profile.username}
-              </Typography>
-            </ProfileContent>
-            {isCurrentUser && (
-              <>
-                <input
-                  ref={avatarInputRef}
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  id="avatar-upload"
-                  type="file"
-                  onChange={(e) => handleImageUpload(e, "avatar")}
-                />
-                <input
-                  ref={backgroundInputRef}
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  id="background-upload"
-                  type="file"
-                  onChange={(e) => handleImageUpload(e, "background")}
-                />
-              </>
-            )}
-          </ProfileHeader>
+            </ProfileHeader>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Groups username={profile.username} />
+          </Grid>
+          <Grid item xs={12} md={9}>
+            {/* Add more profile content here */}
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Groups username={profile.username} />
-        </Grid>
-        <Grid item xs={12} md={9}>
-          {/* Add more profile content here */}
-        </Grid>
-      </Grid>
+      )}
+      {isUpdating && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          bgcolor="rgba(255, 255, 255, 0.7)"
+          zIndex={9999}
+        >
+          <GradientCircularProgress />
+        </Box>
+      )}
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseNotification} severity={notification?.type || "info"} sx={{ width: "100%" }}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
     </ProfileContainer>
   )
 }

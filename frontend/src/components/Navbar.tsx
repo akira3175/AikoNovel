@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   AppBar,
   Toolbar,
@@ -13,11 +13,10 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Typography,
   Box,
   Divider,
-  CircularProgress,
   Link as MuiLink,
+  Skeleton,
 } from "@mui/material"
 import { styled, useTheme } from "@mui/material/styles"
 import MenuIcon from "@mui/icons-material/Menu"
@@ -68,6 +67,14 @@ const DrawerContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
 }))
 
+const StyledNavLink = styled(RouterLink)(({ theme }) => ({
+  color: theme.palette.primary.main,
+  textDecoration: "none",
+  "&:hover": {
+    textDecoration: "underline",
+  },
+}))
+
 const LoadingOverlay = styled(Box)(({ theme }) => ({
   position: "fixed",
   top: 0,
@@ -81,14 +88,6 @@ const LoadingOverlay = styled(Box)(({ theme }) => ({
   zIndex: theme.zIndex.modal + 1,
 }))
 
-const StyledNavLink = styled(RouterLink)(({ theme }) => ({
-  color: theme.palette.primary.main,
-  textDecoration: "none",
-  "&:hover": {
-    textDecoration: "underline",
-  },
-}))
-
 const Navbar: React.FC = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
@@ -98,7 +97,7 @@ const Navbar: React.FC = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
 
-  const { isAuthenticated, user, login, logout, register } = useAuth()
+  const { isAuthenticated, user, login, logout, register, fetchUserInfo, userInfoFetched } = useAuth()
 
   const handleOpenLoginModal = () => {
     setLoginModalOpen(true)
@@ -128,7 +127,7 @@ const Navbar: React.FC = () => {
     } catch (error) {
       console.error("Login failed:", error)
       return false
-    } finally {
+    } finally { 
       setIsLoading(false)
     }
   }
@@ -139,7 +138,7 @@ const Navbar: React.FC = () => {
     password: string,
     confirmPassword: string,
   ): Promise<boolean> => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       await register(username, email, password, confirmPassword)
       handleCloseRegisterModal()
@@ -222,8 +221,8 @@ const Navbar: React.FC = () => {
           <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/doi-mat-khau">
             <ListItemText primary="Đổi mật khẩu" />
           </ListItemButton>
-          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/danh-sach-nhom">
-            <ListItemText primary="Danh sách nhóm" />
+          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/work">
+            <ListItemText primary="Đăng truyện" />
           </ListItemButton>
           <ListItemButton onClick={handleLogout}>
             <ListItemText primary="Đăng xuất" />
@@ -270,8 +269,8 @@ const Navbar: React.FC = () => {
                         <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to="/doi-mat-khau">
                           Đổi mật khẩu
                         </MenuItem>
-                        <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to="/danh-sach-nhom">
-                          Danh sách nhóm
+                        <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to="/work">
+                          Đăng truyện
                         </MenuItem>
                         <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
                       </Menu>

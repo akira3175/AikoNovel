@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent } from 'react';
 import { InputBase, IconButton, styled } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
-const SearchForm = styled('form')(({ theme }) => ({
+interface SearchBarProps {
+  value?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  fullWidth?: boolean;
+  placeholder?: string;
+  style?: React.CSSProperties;
+}
+
+const SearchForm = styled('form')<{ $fullWidth?: boolean }>(({ theme, $fullWidth }) => ({
   position: 'relative',
-  width: '210px',
+  width: $fullWidth ? '100%' : '210px',
   height: '36px',
   borderRadius: '20px',
   border: '1px solid #0dcaf0',
   lineHeight: '36px',
   backgroundColor: '#ffffff',
-  marginInlineEnd: '25px',
+  marginInlineEnd: $fullWidth ? '0' : '25px',
   display: 'flex',
   alignItems: 'center',
   [theme.breakpoints.down('sm')]: {
@@ -34,21 +42,26 @@ const SearchButton = styled(IconButton)({
   },
 });
 
-const SearchBar: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-
+const SearchBar: React.FC<SearchBarProps> = ({
+  value = '',
+  onChange,
+  fullWidth = false,
+  placeholder = "Tìm kiếm...",
+  style,
+}) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchTerm);
+    console.log('Searching for:', value);
     // Implement search functionality here
   };
 
   return (
-    <SearchForm onSubmit={handleSubmit}>
+    <SearchForm onSubmit={handleSubmit} $fullWidth={fullWidth} style={style}>
       <SearchInput
-        placeholder="Tìm kiếm..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        inputProps={{ 'aria-label': 'search' }}
       />
       <SearchButton type="submit" aria-label="search">
         <SearchIcon />
@@ -58,4 +71,3 @@ const SearchBar: React.FC = () => {
 };
 
 export default SearchBar;
-
