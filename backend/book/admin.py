@@ -8,9 +8,9 @@ class BookAuthorInline(admin.TabularInline):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ('title', 'description', 'isCompleted', 'dateUpload', 'dateUpdate')  
-    search_fields = ('title', 'anothername', 'authors__pen_name') 
-    list_filter = ('isCompleted', 'categories') 
+    list_display = ('title', 'description', 'status', 'date_upload', 'date_update')  
+    search_fields = ('title', 'another_name', 'authors__pen_name') 
+    list_filter = ('status', 'categories') 
     inlines = [BookAuthorInline] 
 
 @admin.register(Category)
