@@ -8,6 +8,7 @@ import Base from './pages/Base';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
 import Work from './pages/Work';
+import BookWork from './pages/BookWork';
 // We'll uncomment these imports once we create the corresponding components
 // import Home from './pages/Home';
 // import List from './pages/List';
@@ -40,6 +41,7 @@ const AppContent: React.FC = () => {
       <Router>
         <div className="App">
           <Routes>
+            <Route path="/book/:id" element={<BookWork />} />
             <Route
               path="/*"
               element={

@@ -11,14 +11,45 @@ export interface ProfileData {
   img_background_position: number
 }
 
-// Fetch user profile data
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+})
+
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    const token = getAccessToken()
+    if (!token) {
+      throw new Error("No access token available")
+    }
+    config.headers.Authorization = `Bearer ${token}`
+    return config
+  },
+  (error) => Promise.reject(error),
+)
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      try {
+        const newToken = await refreshToken()
+        setAuthToken(newToken)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return axiosInstance(originalRequest)
+      } catch (refreshError) {
+        console.error("Failed to refresh token:", refreshError)
+        throw refreshError
+      }
+    }
+    return Promise.reject(error)
+  },
+)
+
 export const fetchProfile = async (username: string): Promise<ProfileData> => {
   try {
-    const token = getAccessToken()
-    if (!token) throw new Error("No access token available")
-
-    setAuthToken(token)
-    const response = await axios.get(`${API_URL}/user/${username}/`)
+    const response = await axiosInstance.get(`/user/${username}/`)
     return response.data
   } catch (error) {
     console.error("Error fetching profile:", error)
@@ -26,118 +57,41 @@ export const fetchProfile = async (username: string): Promise<ProfileData> => {
   }
 }
 
-// Update user full name
 export const updateFullName = async (full_name: string): Promise<void> => {
   try {
-    const token = getAccessToken()
-    if (!token) throw new Error("No access token available")
-
-    const response = await axios.patch(
-      `${API_URL}/user/update-fullname/`,
-      { full_name },
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-
-    console.log("Full name updated successfully:", response.data)
-  } catch (error: any) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      try {
-        const newAccessToken = await refreshToken()
-        setAuthToken(newAccessToken)
-
-        const retryResponse = await axios.patch(
-          `${API_URL}/user/update-fullname/`,
-          { full_name },
-          { headers: { Authorization: `Bearer ${newAccessToken}` } },
-        )
-
-        console.log("Full name updated successfully after token refresh:", retryResponse.data)
-      } catch (refreshError) {
-        console.error("Failed to refresh token:", refreshError)
-        throw refreshError
-      }
-    } else {
-      console.error("Error updating full name:", error)
-      throw error
-    }
+    await axiosInstance.patch("/user/update-fullname/", { full_name })
+    console.log("Full name updated successfully")
+  } catch (error) {
+    console.error("Error updating full name:", error)
+    throw error
   }
 }
 
-// Update user avatar
 export const updateAvatar = async (formData: FormData): Promise<void> => {
   try {
-    const token = getAccessToken()
-    if (!token) throw new Error("No access token available")
-
-    const response = await axios.patch(`${API_URL}/user/update-avatar/`, formData, {
+    await axiosInstance.patch("/user/update-avatar/", formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
       },
     })
-
-    console.log("Avatar updated successfully:", response.data)
-  } catch (error: any) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      try {
-        const newAccessToken = await refreshToken()
-        setAuthToken(newAccessToken)
-
-        const retryResponse = await axios.patch(`${API_URL}/user/update-avatar/`, formData, {
-          headers: {
-            Authorization: `Bearer ${newAccessToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        })
-
-        console.log("Avatar updated successfully after token refresh:", retryResponse.data)
-      } catch (refreshError) {
-        console.error("Failed to refresh token:", refreshError)
-        throw refreshError
-      }
-    } else {
-      console.error("Error updating avatar:", error)
-      throw error
-    }
+    console.log("Avatar updated successfully")
+  } catch (error) {
+    console.error("Error updating avatar:", error)
+    throw error
   }
 }
 
-// Update user background
 export const updateBackground = async (formData: FormData): Promise<void> => {
   try {
-    const token = getAccessToken()
-    if (!token) throw new Error("No access token available")
-
-    const response = await axios.patch(`${API_URL}/user/update-background/`, formData, {
+    await axiosInstance.patch("/user/update-background/", formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
       },
     })
-
-    console.log("Background updated successfully:", response.data)
-  } catch (error: any) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      try {
-        const newAccessToken = await refreshToken()
-        setAuthToken(newAccessToken)
-
-        const retryResponse = await axios.patch(`${API_URL}/user/update-background/`, formData, {
-          headers: {
-            Authorization: `Bearer ${newAccessToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        })
-
-        console.log("Background updated successfully after token refresh:", retryResponse.data)
-      } catch (refreshError) {
-        console.error("Failed to refresh token:", refreshError)
-        throw refreshError
-      }
-    } else {
-      console.error("Error updating background:", error)
-      throw error
-    }
+    console.log("Background updated successfully")
+  } catch (error) {
+    console.error("Error updating background:", error)
+    throw error
   }
 }
 
