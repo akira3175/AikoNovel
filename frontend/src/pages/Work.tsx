@@ -15,6 +15,7 @@ import {
   Tabs,
   Tab,
   IconButton,
+  Skeleton,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import AddIcon from "@mui/icons-material/Add"
@@ -69,14 +70,43 @@ const WorksList = styled("div")(({ theme }) => ({
   marginTop: theme.spacing(2),
 }))
 
-const WorkItem = styled("div")(({ theme }) => ({
+const GlassWorkItem = styled("div")<{ $imgUrl: string }>(({ theme, $imgUrl }) => ({
   display: "flex",
   alignItems: "center",
   marginBottom: theme.spacing(2),
   padding: theme.spacing(2),
-  backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[1],
+  position: "relative",
+  overflow: "hidden",
+  transition: "all 0.3s ease",
+  transform: "translateY(-5px)",
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: `url(${$imgUrl})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    filter: "blur(5px)",
+    zIndex: -2,
+  },
+  "&:after": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(10px)",
+    zIndex: -1,
+  },
+  "&:hover": {
+    boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)",
+  },
 }))
 
 const WorkItemImage = styled("img")({
@@ -84,6 +114,9 @@ const WorkItemImage = styled("img")({
   aspectRatio: "53 / 75",
   objectFit: "cover",
   marginRight: 16,
+  borderRadius: "4px",
+  border: "2px solid white",
+  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
 })
 
 const WorkItemInfo = styled("div")({
@@ -91,6 +124,9 @@ const WorkItemInfo = styled("div")({
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
+  backgroundColor: "transparent",
+  padding: "8px",
+  borderRadius: "4px",
 })
 
 interface TabPanelProps {
@@ -161,8 +197,13 @@ const Work: React.FC = () => {
   const navigate = useNavigate()
   const [tabValue, setTabValue] = useState(0)
 
+  const [isLoadingPenName, setIsLoadingPenName] = useState(true)
+  const [isLoadingBooks, setIsLoadingBooks] = useState(true)
+  const [isLoadingGroups, setIsLoadingGroups] = useState(true)
+
   useEffect(() => {
     const fetchPenName = async () => {
+      setIsLoadingPenName(true)
       try {
         const fetchedPenName = await getPenName()
         setPenName(fetchedPenName)
@@ -170,6 +211,8 @@ const Work: React.FC = () => {
       } catch (error) {
         console.error("Error fetching pen name:", error)
         setIsAuthor(false)
+      } finally {
+        setIsLoadingPenName(false)
       }
     }
 
@@ -181,11 +224,14 @@ const Work: React.FC = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       if (isAuthor && penName) {
+        setIsLoadingBooks(true)
         try {
           const fetchedBooks = await getAuthorBooks(penName)
           setBooks(fetchedBooks)
         } catch (error) {
           console.error("Error fetching author's books:", error)
+        } finally {
+          setIsLoadingBooks(false)
         }
       }
     }
@@ -247,23 +293,36 @@ const Work: React.FC = () => {
 
   const renderBookList = () => (
     <WorksList>
-      {books.map((book) => (
-        <WorkItem key={book.id}>
-          <WorkItemImage src={book.img || "/placeholder.svg"} alt={book.title || "Book cover"} />
-          <WorkItemInfo>
-            <Typography variant="h6" component="h3" color="primary" gutterBottom>
-              <strong>{book.title}</strong>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              <strong>{book.quantity_volome} tập</strong>
-            </Typography>
-          </WorkItemInfo>
-          <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
-            <BookManagementDropdown bookId={book.id} />
-          </Box>
-        </WorkItem>
-      ))}
-      {books.length === 0 && <Typography className="no-novel-text">Không có sách nào được tìm thấy.</Typography>}
+      {isLoadingBooks
+        ? Array.from(new Array(3)).map((_, index) => (
+            <GlassWorkItem key={index} $imgUrl="/placeholder.svg">
+              <Skeleton variant="rectangular" width={106} height={150} sx={{ marginRight: 2, borderRadius: "4px" }} />
+              <WorkItemInfo>
+                <Skeleton variant="text" width="80%" height={28} />
+                <Skeleton variant="text" width="40%" height={20} />
+              </WorkItemInfo>
+              <Skeleton variant="rectangular" width={120} height={40} sx={{ borderRadius: "4px" }} />
+            </GlassWorkItem>
+          ))
+        : books.map((book) => (
+            <GlassWorkItem key={book.id} $imgUrl={book.img || "/placeholder.svg"}>
+              <WorkItemImage src={book.img || "/placeholder.svg"} alt={book.title || "Book cover"} />
+              <WorkItemInfo>
+                <Typography variant="h6" component="h3" color="primary" gutterBottom>
+                  <strong>{book.title}</strong>
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>{book.quantity_volome} tập</strong>
+                </Typography>
+              </WorkItemInfo>
+              <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                <BookManagementDropdown bookId={book.id} />
+              </Box>
+            </GlassWorkItem>
+          ))}
+      {!isLoadingBooks && books.length === 0 && (
+        <Typography className="no-novel-text">Không có sách nào được tìm thấy.</Typography>
+      )}
     </WorksList>
   )
 
@@ -280,15 +339,27 @@ const Work: React.FC = () => {
         {renderBookList()}
       </TabPanel>
       <TabPanel value={tabValue} index={1}>
-        Nội dung nhóm của tôi
+        {isLoadingGroups ? (
+          <Skeleton variant="rectangular" height={100} />
+        ) : (
+          <Typography>Nội dung nhóm của tôi</Typography>
+        )}
       </TabPanel>
       <TabPanel value={tabValue} index={2}>
-        Nội dung nhóm khác
+        {isLoadingGroups ? (
+          <Skeleton variant="rectangular" height={100} />
+        ) : (
+          <Typography>Nội dung nhóm khác</Typography>
+        )}
       </TabPanel>
     </Box>
   )
 
   const renderAddButton = () => {
+    if (isLoadingPenName) {
+      return <Skeleton variant="rectangular" width={150} height={40} sx={{ borderRadius: "4px" }} />
+    }
+
     if (tabValue === 0) {
       return (
         <AddButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
@@ -317,20 +388,26 @@ const Work: React.FC = () => {
                       Bút danh
                     </Typography>
                     <PenNameWrapper>
-                      <PenNameText color="primary">{penName || "Chưa đăng ký"}</PenNameText>
-                      <IconButton
-                        color="primary"
-                        onClick={() => setPenNameModalOpen(true)}
-                        size="large"
-                        sx={{
-                          position: "absolute",
-                          right: 0,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {isLoadingPenName ? (
+                        <Skeleton variant="text" width="100%" height={40} />
+                      ) : (
+                        <>
+                          <PenNameText color="primary">{penName || "Chưa đăng ký"}</PenNameText>
+                          <IconButton
+                            color="primary"
+                            onClick={() => setPenNameModalOpen(true)}
+                            size="large"
+                            sx={{
+                              position: "absolute",
+                              right: 0,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </>
+                      )}
                     </PenNameWrapper>
                   </PenNameSection>
                   <Box mb={2}>
@@ -378,20 +455,26 @@ const Work: React.FC = () => {
                       Bút danh
                     </Typography>
                     <PenNameWrapper>
-                      <PenNameText color="primary">{penName || "Chưa đăng ký"}</PenNameText>
-                      <IconButton
-                        color="primary"
-                        onClick={() => setPenNameModalOpen(true)}
-                        size="large"
-                        sx={{
-                          position: "absolute",
-                          right: 0,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {isLoadingPenName ? (
+                        <Skeleton variant="text" width="100%" height={40} />
+                      ) : (
+                        <>
+                          <PenNameText color="primary">{penName || "Chưa đăng ký"}</PenNameText>
+                          <IconButton
+                            color="primary"
+                            onClick={() => setPenNameModalOpen(true)}
+                            size="large"
+                            sx={{
+                              position: "absolute",
+                              right: 0,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </>
+                      )}
                     </PenNameWrapper>
                   </PenNameSection>
                   <Box>
