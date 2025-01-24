@@ -23,7 +23,7 @@ import { fetchProfile, updateFullName, updateAvatar, updateBackground, type Prof
 import { useAuth } from "../contexts/AuthContext"
 import Groups from "../components/profile/Groups"
 import { GradientCircularProgress } from "../components/ui/GradientCircularProgress"
-import NotFound from "./NotFound"
+import NotFound from "../pages/NotFound"
 
 const ProfileContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -132,7 +132,7 @@ const Profile: React.FC = () => {
         } catch (error) {
           console.error("Failed to load profile:", error)
           if (error instanceof AxiosError && error.response?.status === 404) {
-            navigate("/404", { replace: true })
+            setProfile(null);
           } else {
             setError("Failed to load profile. Please try again.")
           }
@@ -218,9 +218,7 @@ const Profile: React.FC = () => {
   if (!profile) {
     return (
       <ProfileContainer>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-          <Typography>Profile not found.</Typography>
-        </Box>
+        <NotFound />
       </ProfileContainer>
     )
   }

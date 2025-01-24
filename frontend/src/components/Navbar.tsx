@@ -68,8 +68,8 @@ const DrawerContent = styled(Box)(({ theme }) => ({
 }))
 
 const StyledNavLink = styled(RouterLink)(({ theme }) => ({
-  color: theme.palette.primary.main,
   textDecoration: "none",
+  color: theme.palette.primary.main,
   "&:hover": {
     textDecoration: "underline",
   },
@@ -127,7 +127,7 @@ const Navbar: React.FC = () => {
     } catch (error) {
       console.error("Login failed:", error)
       return false
-    } finally { 
+    } finally {
       setIsLoading(false)
     }
   }
@@ -138,7 +138,7 @@ const Navbar: React.FC = () => {
     password: string,
     confirmPassword: string,
   ): Promise<boolean> => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       await register(username, email, password, confirmPassword)
       handleCloseRegisterModal()
@@ -199,6 +199,7 @@ const Navbar: React.FC = () => {
             onClick={toggleDrawer(false)}
             component={StyledNavLink}
             to={index === 0 ? "/" : `/${text.toLowerCase().replace(" ", "-")}`}
+            style={{ color: theme.palette.primary.main }}
           >
             <ListItemText primary={text} />
           </ListItemButton>
@@ -207,7 +208,7 @@ const Navbar: React.FC = () => {
       <Divider />
       {isAuthenticated ? (
         <List>
-          <ListItemButton onClick={handleOpenMenu}>
+          <ListItemButton onClick={handleOpenMenu} component={StyledNavLink} to={`/profile/${user?.username}`} style={{ color: theme.palette.primary.main }}>
             <Avatar
               alt={user?.username || "User"}
               src={user?.img_avatar || "/default-avatar.png"}
@@ -215,16 +216,16 @@ const Navbar: React.FC = () => {
             />
             <ListItemText primary={user?.fullname || user?.username || "User"} />
           </ListItemButton>
-          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/library">
+          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/library" style={{ color: theme.palette.primary.main }}>
             <ListItemText primary="Thư viện" />
           </ListItemButton>
-          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/doi-mat-khau">
+          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/doi-mat-khau" style={{ color: theme.palette.primary.main }}>
             <ListItemText primary="Đổi mật khẩu" />
           </ListItemButton>
-          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/work">
+          <ListItemButton onClick={toggleDrawer(false)} component={StyledNavLink} to="/work" style={{ color: theme.palette.primary.main }}>
             <ListItemText primary="Đăng truyện" />
           </ListItemButton>
-          <ListItemButton onClick={handleLogout}>
+          <ListItemButton onClick={handleLogout} style={{ color: theme.palette.primary.main }}>
             <ListItemText primary="Đăng xuất" />
           </ListItemButton>
         </List>
@@ -255,7 +256,12 @@ const Navbar: React.FC = () => {
                         <Avatar alt={user?.username || "User"} src={user?.img_avatar || "/default-avatar.png"} />
                       </IconButton>
                       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
-                        <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to={`/profile/${user?.username}`}>
+                        <MenuItem
+                          onClick={handleCloseMenu}
+                          component={StyledNavLink}
+                          to={`/profile/${user?.username}`}
+                          style={{ color: theme.palette.primary.main }}
+                        >
                           <Avatar
                             alt={user?.username || "User"}
                             src={user?.img_avatar || "/default-avatar.png"}
@@ -263,16 +269,33 @@ const Navbar: React.FC = () => {
                           />
                           <ListItemText primary={user?.fullname || user?.username || "User"} />
                         </MenuItem>
-                        <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to="/library">
+                        <MenuItem
+                          onClick={handleCloseMenu}
+                          component={StyledNavLink}
+                          to="/library"
+                          style={{ color: theme.palette.primary.main }}
+                        >
                           Thư viện
                         </MenuItem>
-                        <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to="/doi-mat-khau">
+                        <MenuItem
+                          onClick={handleCloseMenu}
+                          component={StyledNavLink}
+                          to="/doi-mat-khau"
+                          style={{ color: theme.palette.primary.main }}
+                        >
                           Đổi mật khẩu
                         </MenuItem>
-                        <MenuItem onClick={handleCloseMenu} component={StyledNavLink} to="/work">
+                        <MenuItem
+                          onClick={handleCloseMenu}
+                          component={StyledNavLink}
+                          to="/work"
+                          style={{ color: theme.palette.primary.main }}
+                        >
                           Đăng truyện
                         </MenuItem>
-                        <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
+                        <MenuItem onClick={handleLogout} style={{ color: theme.palette.primary.main }}>
+                          Đăng xuất
+                        </MenuItem>
                       </Menu>
                     </>
                   ) : (

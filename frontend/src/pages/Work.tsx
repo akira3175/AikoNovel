@@ -1,44 +1,47 @@
-import React from "react"
+import type React from "react"
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Container,
   Grid,
   Paper,
   Typography,
   Button,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Modal,
   Box,
-  Fade,
-  TextField,
-  Card,
-  CardContent,
   useMediaQuery,
-  type Theme,
+  useTheme,
+  Modal,
+  TextField,
+  Tabs,
+  Tab,
+  IconButton,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import AddIcon from "@mui/icons-material/Add"
 import EditIcon from "@mui/icons-material/Edit"
 import SearchBar from "../components/ui/SearchBar"
-import AnimatedTabs from "../components/ui/AnimatedTabs"
 import { useAuth } from "../contexts/AuthContext"
 import { registerAuthor, getPenName, updatePenName } from "../services/contributors"
 import { createBook, getAuthorBooks, type BookDetails } from "../services/book"
-import { useNavigate } from "react-router-dom"
+import BookManagementDropdown from "../components/work/BookManagementDropdown"
 
 const WorkContainer = styled(Container)(({ theme }) => ({
-  height: "calc(100vh - 64px)",
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(2),
-  overflowY: "auto",
 }))
+
+const ContentWrapper = styled(Box)({
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+})
 
 const Panel = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
-  height: "100%",
+  height: "auto",
   display: "flex",
   flexDirection: "column",
 }))
@@ -62,50 +65,88 @@ const AddButton = styled(Button)({
   marginLeft: "auto",
 })
 
-const PenNameCard = styled(Card)(({ theme }) => ({
+const WorksList = styled("div")(({ theme }) => ({
+  marginTop: theme.spacing(2),
+}))
+
+const WorkItem = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
   marginBottom: theme.spacing(2),
-  background: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
-  borderRadius: theme.shape.borderRadius,
-  position: "relative",
-  overflow: "hidden",
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: "-50%",
-    left: "-50%",
-    width: "200%",
-    height: "200%",
-    background: "conic-gradient(transparent, rgba(255,255,255,0.3), transparent 30%)",
-    animation: "rotate 4s linear infinite",
-  },
-  "@keyframes rotate": {
-    "100%": {
-      transform: "rotate(1turn)",
-    },
-  },
-}))
-
-const PenNameContent = styled(CardContent)(({ theme }) => ({
-  position: "relative",
-  zIndex: 1,
-  background: "rgba(255,255,255,0.9)",
-  borderRadius: `${theme.shape.borderRadius - 2}px`,
   padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[1],
 }))
 
-const StyledAnimatedTabs = styled(AnimatedTabs)(({ theme }) => ({
-  "& .MuiTab-root": {
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    color: theme.palette.text.primary,
-    "&.Mui-selected": {
-      color: theme.palette.primary.main,
-    },
-  },
+const WorkItemImage = styled("img")({
+  width: "106px",
+  aspectRatio: "53 / 75",
+  objectFit: "cover",
+  marginRight: 16,
+})
+
+const WorkItemInfo = styled("div")({
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+})
+
+interface TabPanelProps {
+  children?: React.ReactNode
+  index: number
+  value: number
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  )
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `simple-tab-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
+  }
+}
+
+const PenNameSection = styled(Box)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+}))
+
+const PenNameWrapper = styled(Box)(({ theme }) => ({
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  width: "100%",
+}))
+
+const PenNameText = styled(Typography)(({ theme }) => ({
+  fontSize: "1.5rem",
+  fontWeight: "bold",
+  textAlign: "center",
+  width: "100%",
+  paddingRight: theme.spacing(4),
+  paddingLeft: theme.spacing(4),
 }))
 
 const Work: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [newItemName, setNewItemName] = useState("")
   const [penName, setPenName] = useState("")
@@ -115,8 +156,10 @@ const Work: React.FC = () => {
   const [newPenName, setNewPenName] = useState("")
   const [books, setBooks] = useState<BookDetails[]>([])
   const { user, userInfoFetched } = useAuth()
-  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"))
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
   const navigate = useNavigate()
+  const [tabValue, setTabValue] = useState(0)
 
   useEffect(() => {
     const fetchPenName = async () => {
@@ -150,10 +193,6 @@ const Work: React.FC = () => {
     fetchBooks()
   }, [isAuthor, penName])
 
-  const handleTabChange = (newValue: number) => {
-    setTabValue(newValue)
-  }
-
   const handleAddClick = () => {
     setModalOpen(true)
   }
@@ -165,7 +204,7 @@ const Work: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (tabValue === 0 && !isAuthor) {
+    if (!isAuthor) {
       try {
         const result = await registerAuthor(newItemName)
         setPenName(result.pen_name)
@@ -173,7 +212,7 @@ const Work: React.FC = () => {
       } catch (error) {
         console.error("Error registering author:", error)
       }
-    } else if (tabValue === 0 && isAuthor) {
+    } else {
       try {
         const result = await createBook(newItemName)
         console.log("New book created:", result)
@@ -181,9 +220,6 @@ const Work: React.FC = () => {
       } catch (error) {
         console.error("Error creating book:", error)
       }
-    } else {
-      // Implement the logic to create a new group here
-      console.log(`Creating new group: ${newItemName}`)
     }
     handleCloseModal()
   }
@@ -205,160 +241,176 @@ const Work: React.FC = () => {
     }
   }
 
-  const getAddButtonText = () => {
-    if (tabValue === 0 && !isAuthor) {
-      return "Đăng ký tác giả"
-    }
-    switch (tabValue) {
-      case 0:
-        return "Tạo truyện"
-      case 1:
-        return "Tạo nhóm"
-      default:
-        return "Thêm mới"
-    }
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue)
   }
 
   const renderBookList = () => (
-    <List>
+    <WorksList>
       {books.map((book) => (
-        <React.Fragment key={book.id}>
-          <ListItem component="button" onClick={() => navigate(`/book/${book.id}`)}>
-            <ListItemText
-                primary={book.title || "Untitled"}
-                secondary={`Tác giả: ${book.authors[0]?.pen_name || "Unknown"}`}
-            />
-          </ListItem>
-          <Divider />
-        </React.Fragment>
+        <WorkItem key={book.id}>
+          <WorkItemImage src={book.img || "/placeholder.svg"} alt={book.title || "Book cover"} />
+          <WorkItemInfo>
+            <Typography variant="h6" component="h3" color="primary" gutterBottom>
+              <strong>{book.title}</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <strong>{book.quantity_volome} tập</strong>
+            </Typography>
+          </WorkItemInfo>
+          <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+            <BookManagementDropdown bookId={book.id} />
+          </Box>
+        </WorkItem>
       ))}
-    </List>
+      {books.length === 0 && <Typography className="no-novel-text">Không có sách nào được tìm thấy.</Typography>}
+    </WorksList>
   )
 
-  const tabContent = [
-    {
-      label: "Truyện của tôi",
-      content: (
-        <>
-          {isAuthor ? (
-            books.length > 0 ? (
-              renderBookList()
-            ) : (
-              <Typography>Bạn chưa có truyện nào. Hãy tạo truyện mới!</Typography>
-            )
-          ) : (
-            <Typography>Bạn cần đăng ký tác giả với bút danh để tạo truyện.</Typography>
-          )}
-        </>
-      ),
-    },
-    {
-      label: "Nhóm của tôi",
-      content: (
-        <List>
-          <ListItem>
-            <ListItemText primary="Nhóm 1" secondary="Thành viên: 5" />
-          </ListItem>
-          <Divider />
-          <ListItem>
-            <ListItemText primary="Nhóm 2" secondary="Thành viên: 3" />
-          </ListItem>
-        </List>
-      ),
-    },
-    {
-      label: "Nhóm khác",
-      content: (
-        <List>
-          <ListItem>
-            <ListItemText primary="Nhóm A" secondary="Thành viên: 10" />
-          </ListItem>
-          <Divider />
-          <ListItem>
-            <ListItemText primary="Nhóm B" secondary="Thành viên: 7" />
-          </ListItem>
-        </List>
-      ),
-    },
-  ]
-
-  const renderPenNameCard = () => (
-    <PenNameCard>
-      <PenNameContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" gutterBottom>
-            Bút danh
-          </Typography>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={isAuthor ? <EditIcon /> : <AddIcon />}
-            onClick={() => setPenNameModalOpen(true)}
-          >
-            {isAuthor ? "Đổi bút danh" : "Đăng ký"}
-          </Button>
-        </Box>
-        <Typography variant="h5" fontWeight="bold" color="primary">
-          {penName || "Chưa đăng ký"}
-        </Typography>
-      </PenNameContent>
-    </PenNameCard>
+  const renderFragments = () => (
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="work tabs">
+          <Tab label="Truyện của tôi" {...a11yProps(0)} />
+          <Tab label="Nhóm của tôi" {...a11yProps(1)} />
+          <Tab label="Nhóm khác" {...a11yProps(2)} />
+        </Tabs>
+      </Box>
+      <TabPanel value={tabValue} index={0}>
+        {renderBookList()}
+      </TabPanel>
+      <TabPanel value={tabValue} index={1}>
+        Nội dung nhóm của tôi
+      </TabPanel>
+      <TabPanel value={tabValue} index={2}>
+        Nội dung nhóm khác
+      </TabPanel>
+    </Box>
   )
+
+  const renderAddButton = () => {
+    if (tabValue === 0) {
+      return (
+        <AddButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
+          {isAuthor ? "Tạo truyện" : "Đăng ký tác giả"}
+        </AddButton>
+      )
+    } else {
+      return (
+        <AddButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
+          Tạo nhóm
+        </AddButton>
+      )
+    }
+  }
 
   return (
     <WorkContainer maxWidth="lg">
-      <Grid container spacing={3}>
-        {isMobile && (
-          <Grid item xs={12}>
-            <Panel>{renderPenNameCard()}</Panel>
-            <Box mt={2}>
-              <Panel>
-                <SearchBar
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  fullWidth
-                  placeholder="Tìm kiếm..."
-                />
-              </Panel>
-            </Box>
-          </Grid>
-        )}
-        <Grid item xs={12} md={8}>
-          <Panel>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h5" component="h1">
-                Workspace
-              </Typography>
-              {(isAuthor || tabValue !== 0) && (
-                <AddButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
-                  {getAddButtonText()}
-                </AddButton>
-              )}
-            </Box>
-            <StyledAnimatedTabs tabs={tabContent} value={tabValue} onChange={handleTabChange} />
-            <Box sx={{ flexGrow: 1, overflow: "auto", mt: 2 }}>
-              <Fade in={true} timeout={500}>
-                <div>{tabContent[tabValue].content}</div>
-              </Fade>
-            </Box>
-          </Panel>
+      <ContentWrapper>
+        <Grid container spacing={3}>
+          {isMobile ? (
+            <>
+              <Grid item xs={12}>
+                <Panel>
+                  <PenNameSection>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Bút danh
+                    </Typography>
+                    <PenNameWrapper>
+                      <PenNameText color="primary">{penName || "Chưa đăng ký"}</PenNameText>
+                      <IconButton
+                        color="primary"
+                        onClick={() => setPenNameModalOpen(true)}
+                        size="large"
+                        sx={{
+                          position: "absolute",
+                          right: 0,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </PenNameWrapper>
+                  </PenNameSection>
+                  <Box mb={2}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Tìm kiếm
+                    </Typography>
+                    <SearchBar
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      fullWidth
+                      placeholder="Tìm kiếm..."
+                    />
+                  </Box>
+                </Panel>
+              </Grid>
+              <Grid item xs={12}>
+                <Panel>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="h5" component="h1">
+                      Workspace
+                    </Typography>
+                    {renderAddButton()}
+                  </Box>
+                  {renderFragments()}
+                </Panel>
+              </Grid>
+            </>
+          ) : (
+            <>
+              <Grid item xs={12} md={8}>
+                <Panel>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="h5" component="h1">
+                      Workspace
+                    </Typography>
+                    {renderAddButton()}
+                  </Box>
+                  {renderFragments()}
+                </Panel>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Panel>
+                  <PenNameSection>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Bút danh
+                    </Typography>
+                    <PenNameWrapper>
+                      <PenNameText color="primary">{penName || "Chưa đăng ký"}</PenNameText>
+                      <IconButton
+                        color="primary"
+                        onClick={() => setPenNameModalOpen(true)}
+                        size="large"
+                        sx={{
+                          position: "absolute",
+                          right: 0,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </PenNameWrapper>
+                  </PenNameSection>
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Tìm kiếm
+                    </Typography>
+                    <SearchBar
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      fullWidth
+                      placeholder="Tìm kiếm..."
+                    />
+                  </Box>
+                </Panel>
+              </Grid>
+            </>
+          )}
         </Grid>
-        {!isMobile && (
-          <Grid item xs={12} md={4}>
-            <Panel>{renderPenNameCard()}</Panel>
-            <Box mt={2}>
-              <Panel>
-                <SearchBar
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  fullWidth
-                  placeholder="Tìm kiếm..."
-                />
-              </Panel>
-            </Box>
-          </Grid>
-        )}
-      </Grid>
+      </ContentWrapper>
       <StyledModal
         open={modalOpen}
         onClose={handleCloseModal}
@@ -367,12 +419,12 @@ const Work: React.FC = () => {
       >
         <ModalContent>
           <Typography id="add-modal-title" variant="h6" component="h2" gutterBottom>
-            {getAddButtonText()}
+            {isAuthor ? (tabValue === 0 ? "Tạo truyện mới" : "Tạo nhóm mới") : "Đăng ký tác giả"}
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label={tabValue === 0 && !isAuthor ? "Bút danh" : tabValue === 0 ? "Tên truyện" : "Tên nhóm"}
+              label={isAuthor ? (tabValue === 0 ? "Tên truyện" : "Tên nhóm") : "Bút danh"}
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
               margin="normal"
@@ -386,7 +438,7 @@ const Work: React.FC = () => {
               disabled={!newItemName.trim()}
               sx={{ mt: 2 }}
             >
-              {getAddButtonText()}
+              {isAuthor ? (tabValue === 0 ? "Tạo truyện" : "Tạo nhóm") : "Đăng ký"}
             </Button>
           </form>
         </ModalContent>

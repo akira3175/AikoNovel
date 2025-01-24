@@ -23,7 +23,7 @@ class Book(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     another_name = models.CharField(max_length=200, null=True)
-    img = models.URLField(null=True, blank=True) 
+    img = models.URLField(null=True, blank=True, default='https://i.imgur.com/OJbZSFy.jpeg') 
     authors = models.ManyToManyField(Author, through='BookAuthor', related_name='books')
     artist = models.CharField(max_length=100, null=True)
     status = models.ForeignKey(
@@ -46,8 +46,6 @@ class Book(models.Model):
         return self.title or "Unnamed Book"
 
     def save(self, *args, **kwargs):
-        if self.img:
-            self.img = upload_image_to_imgur(self.img)  
 
         if not self.status:
             self.status = BookStatus.objects.filter(code='ongoing').first()
