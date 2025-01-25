@@ -32,37 +32,47 @@ const ProfileContainer = styled(Container)(({ theme }) => ({
 
 const ProfileHeader = styled(Paper)(({ theme }) => ({
   position: "relative",
-  padding: theme.spacing(2),
+  padding: theme.spacing(0),
   marginBottom: theme.spacing(2),
   overflow: "hidden",
 }))
 
-const BackgroundImage = styled(Box)<{ $imgUrl?: string }>(({ theme, $imgUrl }) => ({
+const BackgroundImage = styled("img")(({ theme }) => ({
   position: "absolute",
   top: 0,
   left: 0,
   right: 0,
-  height: "150px",
-  backgroundImage: $imgUrl ? `url(${$imgUrl})` : "none",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  display: "flex",
-  justifyContent: "flex-end",
-  alignItems: "flex-end",
+  height: "100%",
+  width: "100%",
+  objectFit: "cover",
+  objectPosition: "center",
+}))
+
+const BackgroundImageBox = styled(Box)(({ theme }) => ({
+  position: "relative",
+  width: "100%",
+  aspectRatio: "14/3",
 }))
 
 const ProfileContent = styled(Box)(({ theme }) => ({
   position: "relative",
   zIndex: 1,
-  paddingTop: "100px",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
+  height: "165px",
 }))
 
 const AvatarContainer = styled(Box)(({ theme }) => ({
   position: "relative",
   marginBottom: theme.spacing(2),
+  width: "120px",
+  left: "25%",
+}))
+
+const AvatarBox = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  top: "-50px",
 }))
 
 const ProfileAvatar = styled(Avatar)(({ theme }) => ({
@@ -237,53 +247,64 @@ const Profile: React.FC = () => {
         </Box>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid item xs={12} md={12}>
             <ProfileHeader elevation={3}>
-              <BackgroundImage $imgUrl={profile.img_background || undefined}>
+            <BackgroundImageBox>
+              <BackgroundImage src={profile.img_background || "/placeholder.svg"} alt="Profile background" />
                 {isCurrentUser && (
-                  <ChangeBackgroundButton onClick={triggerBackgroundUpload} size="small">
+                  <ChangeBackgroundButton
+                    onClick={triggerBackgroundUpload}
+                    size="small"
+                    sx={{
+                      position: "absolute",
+                      right: (theme) => theme.spacing(1),
+                      bottom: (theme) => theme.spacing(1),
+                    }}
+                  >
                     <CameraAltIcon fontSize="small" />
                   </ChangeBackgroundButton>
                 )}
-              </BackgroundImage>
+              </BackgroundImageBox>
               <ProfileContent>
-                <AvatarContainer>
-                  <ProfileAvatar src={profile.img_avatar || undefined} alt={profile.full_name}>
-                    {profile.full_name.charAt(0)}
-                  </ProfileAvatar>
-                  {isCurrentUser && (
-                    <ChangeAvatarButton onClick={triggerAvatarUpload} size="small">
-                      <CameraAltIcon fontSize="small" />
-                    </ChangeAvatarButton>
-                  )}
-                </AvatarContainer>
-                {isEditing ? (
-                  <Box display="flex" alignItems="center">
-                    <TextField
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      variant="outlined"
-                      size="small"
-                    />
-                    <Button onClick={handleSaveProfile} variant="contained" color="primary" sx={{ ml: 1 }}>
-                      Save
-                    </Button>
-                  </Box>
-                ) : (
-                  <Box display="flex" alignItems="center">
-                    <Typography variant="h5" component="h1">
-                      {profile.full_name}
-                    </Typography>
+                <AvatarBox>
+                  <AvatarContainer>
+                    <ProfileAvatar src={profile.img_avatar || undefined} alt={profile.full_name}>
+                      {profile.full_name.charAt(0)}
+                    </ProfileAvatar>
                     {isCurrentUser && (
-                      <IconButton onClick={handleEditProfile} size="small" sx={{ ml: 1 }}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
+                      <ChangeAvatarButton onClick={triggerAvatarUpload} size="small">
+                        <CameraAltIcon fontSize="small" />
+                      </ChangeAvatarButton>
                     )}
-                  </Box>
-                )}
-                <Typography variant="subtitle1" color="text.secondary">
-                  @{profile.username}
-                </Typography>
+                  </AvatarContainer>
+                  {isEditing ? (
+                    <Box display="flex" alignItems="center">
+                      <TextField
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        variant="outlined"
+                        size="small"
+                      />
+                      <Button onClick={handleSaveProfile} variant="contained" color="primary" sx={{ ml: 1 }}>
+                        Save
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box display="flex" alignItems="center">
+                      <Typography variant="h5" component="h1">
+                        {profile.full_name}
+                      </Typography>
+                      {isCurrentUser && (
+                        <IconButton onClick={handleEditProfile} size="small" sx={{ ml: 1 }}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Box>
+                  )}
+                  <Typography variant="subtitle1" color="text.secondary">
+                    @{profile.username}
+                  </Typography>
+                </AvatarBox>
               </ProfileContent>
               {isCurrentUser && (
                 <>

@@ -129,6 +129,16 @@ const WorkItemInfo = styled("div")({
   borderRadius: "4px",
 })
 
+const BookTitleTypography = styled(Typography)(({ theme }) => ({
+  display: "-webkit-box", 
+  WebkitBoxOrient: "vertical", 
+  WebkitLineClamp: 2,
+  overflow: "hidden", 
+  textOverflow: "ellipsis",
+  wordBreak: "break-word", 
+  textAlign: "left",
+}));
+
 interface TabPanelProps {
   children?: React.ReactNode
   index: number
@@ -308,9 +318,9 @@ const Work: React.FC = () => {
             <GlassWorkItem key={book.id} $imgUrl={book.img || "/placeholder.svg"}>
               <WorkItemImage src={book.img || "/placeholder.svg"} alt={book.title || "Book cover"} />
               <WorkItemInfo>
-                <Typography variant="h6" component="h3" color="primary" gutterBottom>
-                  <strong>{book.title}</strong>
-                </Typography>
+                <BookTitleTypography variant="h6" color="primary" gutterBottom>
+                    <strong>{book.title}</strong>
+                </BookTitleTypography>
                 <Typography variant="body2" color="text.secondary">
                   <strong>{book.quantity_volome} tập</strong>
                 </Typography>

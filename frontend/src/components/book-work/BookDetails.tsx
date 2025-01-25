@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Grid, TextField, Button, Typography, Switch, FormControlLabel, Chip, Box } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import type { BookDetails as BookDetailsType } from "../../services/book"
+import ImageWithNoReferrer from "../ui/ImageWithNoReferrer"
 
 const ImageUpload = styled("div")(({ theme }) => ({
   width: "256px",
@@ -37,7 +38,7 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book }) => {
       <Grid item xs={12} md={4}>
         <ImageUpload onClick={handleImageUpload}>
           {book.img ? (
-            <img
+            <ImageWithNoReferrer
               src={book.img || "/placeholder.svg"}
               alt="Book cover"
               style={{ maxWidth: "100%", maxHeight: "100%" }}
