@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import generics
 from .models import *
 from .serializers import *
 from .permissions import *
+from django_filters.rest_framework import DjangoFilterBackend
 
 class BookDetailView(APIView):
     """
@@ -16,10 +18,10 @@ class BookDetailView(APIView):
         except Book.DoesNotExist:
             # Nếu không tìm thấy quyển sách, trả về lỗi 404
             return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         # Serialize dữ liệu của quyển sách
         serializer = BookSerializer(book)
-        
+
         # Trả về thông tin quyển sách dưới dạng JSON
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -39,7 +41,7 @@ class BooksByPenNameView(APIView):
 
         # Serialize danh sách sách
         serializer = BookSerializer(books, many=True)
-        
+
         # Trả về danh sách sách của tác giả
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -78,9 +80,15 @@ class UpdateBookView(APIView):
             book = Book.objects.get(id=book_id)
         except Book.DoesNotExist:
             return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         serializer = UpdateBookSerializer(book, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Book updated successfully"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name']
