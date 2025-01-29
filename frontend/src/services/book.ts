@@ -27,6 +27,12 @@ export interface BookDetails {
   categories: any[]
 }
 
+export interface Category {
+  id: number
+  name: string
+  description: string
+}
+
 export const createBook = async (title: string): Promise<{ id: number; title: string }> => {
   const token = getAccessToken()
   if (!token) throw new Error("No access token available")
@@ -88,3 +94,14 @@ export const updateBookDetails = async (book: BookDetails): Promise<BookDetails>
     throw error
   }
 }
+
+export const getCategories = async (): Promise<Category[]> => {
+  try {
+    const response = await axios.get(`${API_URL}/book/categories/`)
+    return response.data
+  } catch (error) {
+    console.error("Error fetching categories:", error)
+    throw error
+  }
+}
+

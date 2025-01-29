@@ -100,7 +100,6 @@ export const refreshToken = async () => {
     // Xử lý lỗi cụ thể
     if (axios.isAxiosError(error)) {
       if (error.code === 'ECONNABORTED') {
-        console.log("Request timed out");
         throw new Error("Network timeout");
       }
       

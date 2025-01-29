@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Grid,
   TextField,
@@ -11,13 +11,16 @@ import {
   Box,
   Paper,
   IconButton,
+  Autocomplete,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import AddIcon from "@mui/icons-material/Add"
 import EditIcon from "@mui/icons-material/Edit"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
-import type { BookDetails as BookDetailsType } from "../../services/book"
+import CloseIcon from "@mui/icons-material/Close"
+import type { BookDetails as BookDetailsType, Category } from "../../services/book"
+import { getCategories } from "../../services/book"
 import ImageUpload from "../common/ImageUpload"
 
 const StyledBox = styled(Box)(({ theme }) => ({
@@ -27,6 +30,32 @@ const StyledBox = styled(Box)(({ theme }) => ({
 
 const CategoryChip = styled(Chip)(({ theme }) => ({
   margin: theme.spacing(0.5),
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  borderRadius: "16px",
+  "& .MuiChip-label": {
+    padding: "0 12px",
+  },
+  "& .MuiChip-deleteIcon": {
+    color: theme.palette.primary.contrastText,
+    "&:hover": {
+      color: theme.palette.primary.light,
+    },
+  },
+}))
+
+const CategoryContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: theme.spacing(1),
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+}))
+
+const CategoryAutocomplete = styled(Autocomplete<Category, false, false, false>)(({ theme }) => ({
+  width: "100%",
+  marginRight: theme.spacing(1),
 }))
 
 interface BookDetailsProps {
@@ -36,7 +65,26 @@ interface BookDetailsProps {
 
 const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [editedBook, setEditedBook] = useState<BookDetailsType>(book)
+  const [editedBook, setEditedBook] = useState<BookDetailsType>({
+    ...book,
+    categories: book.categories.map((category) =>
+      typeof category === "string" ? { id: 0, name: category, description: "" } : category,
+    ),
+  })
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fetchedCategories = await getCategories()
+        setCategories(fetchedCategories)
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing)
@@ -60,13 +108,19 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
   }
 
   const handleAddCategory = () => {
-    // Implement add category logic
+    if (selectedCategory && !editedBook.categories.some((cat) => cat.id === selectedCategory.id)) {
+      setEditedBook((prev) => ({
+        ...prev,
+        categories: [...prev.categories, selectedCategory],
+      }))
+      setSelectedCategory(null)
+    }
   }
 
-  const handleRemoveCategory = (category: string) => {
+  const handleRemoveCategory = (categoryId: number) => {
     setEditedBook((prev) => ({
       ...prev,
-      categories: prev.categories.filter((c) => c !== category),
+      categories: prev.categories.filter((c) => c.id !== categoryId),
     }))
   }
 
@@ -113,26 +167,40 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
             <Typography variant="subtitle1" gutterBottom>
               Thể loại
             </Typography>
-            <Box display="flex" flexWrap="wrap">
-              {editedBook.categories.map((category, index) => (
+            <CategoryContainer>
+              {editedBook.categories.map((category) => (
                 <CategoryChip
-                  key={index}
-                  label={category}
-                  onDelete={isEditing ? () => handleRemoveCategory(category) : undefined}
+                  key={category.id}
+                  label={category.name}
+                  onDelete={isEditing ? () => handleRemoveCategory(category.id) : undefined}
+                  deleteIcon={<CloseIcon />}
                 />
               ))}
-              {isEditing && (
-                <Button
-                  variant="outlined"
+            </CategoryContainer>
+            {isEditing && (
+              <Box display="flex" alignItems="center" mt={2}>
+                <CategoryAutocomplete
+                  options={categories}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedCategory}
+                  onChange={(_, newValue) => setSelectedCategory(newValue)}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Chọn thể loại" variant="outlined" size="small" />
+                  )}
                   size="small"
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
                   startIcon={<AddIcon />}
                   onClick={handleAddCategory}
-                  style={{ marginLeft: 8 }}
+                  disabled={!selectedCategory}
+                  sx={{ ml: 1, height: "40px" }}
                 >
-                  Thêm thể loại
+                  Thêm
                 </Button>
-              )}
-            </Box>
+              </Box>
+            )}
           </Box>
           <TextField
             fullWidth
