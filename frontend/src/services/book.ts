@@ -74,3 +74,17 @@ export const getAuthorBooks = async (penName: string): Promise<BookDetails[]> =>
   }
 }
 
+export const updateBookDetails = async (book: BookDetails): Promise<BookDetails> => {
+  const token = getAccessToken()
+  if (!token) throw new Error("No access token available")
+
+  try {
+    const response = await axios.put(`${API_URL}/book/${book.id}/`, book, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    console.error("Error updating book details:", error)
+    throw error
+  }
+}

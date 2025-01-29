@@ -1,13 +1,35 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { AppBar, Toolbar, Typography, Button, Container, Paper, Tabs, Tab, Box } from "@mui/material"
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  Paper,
+  Tabs,
+  Tab,
+  Box,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton,
+} from "@mui/material"
 import { styled } from "@mui/material/styles"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import { getBookDetails, type BookDetails } from "../services/book"
-import BookDetailsComponent from "../components/book-work/BookDetails"
-import TableOfContents from "../components/book-work/TableOfContents"
-import Notes from "../components/book-work/Notes"
+import SaveIcon from "@mui/icons-material/Save"
+import MenuIcon from "@mui/icons-material/Menu"
+import InfoIcon from "@mui/icons-material/Info"
+import ListIcon from "@mui/icons-material/List"
+import NoteIcon from "@mui/icons-material/Note"
+import { getBookDetails, updateBookDetails, type BookDetails } from "../services/book"
+import BookDetailsComponent from "../components/BookWork/BookDetails"
+import TableOfContents from "../components/BookWork/TableOfContents"
+import Notes from "../components/BookWork/Notes"
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -57,6 +79,7 @@ const BookWork: React.FC = () => {
   const navigate = useNavigate()
   const [book, setBook] = useState<BookDetails | null>(null)
   const [tabValue, setTabValue] = useState(0)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -76,45 +99,87 @@ const BookWork: React.FC = () => {
     setTabValue(newValue)
   }
 
-  const handleSave = () => {
-    // Implement save functionality
-    console.log("Saving book details")
+  const handleSave = async () => {
+    if (book) {
+      try {
+        await updateBookDetails(book)
+        console.log("Book details saved successfully")
+      } catch (error) {
+        console.error("Failed to save book details:", error)
+      }
+    }
   }
 
   const handleCancel = () => {
     navigate(-1)
   }
 
+  const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+    if (
+      event.type === "keydown" &&
+      ((event as React.KeyboardEvent).key === "Tab" || (event as React.KeyboardEvent).key === "Shift")
+    ) {
+      return
+    }
+    setDrawerOpen(open)
+  }
+
+  const drawerContent = (
+    <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)} onKeyDown={toggleDrawer(false)}>
+      <List>
+        {["Chi tiết", "Mục lục", "Ghi chú"].map((text, index) => (
+          <ListItem key={text} onClick={() => setTabValue(index)}>
+            <ListItemButton>
+              <ListItemIcon>{index === 0 ? <InfoIcon /> : index === 1 ? <ListIcon /> : <NoteIcon />}</ListItemIcon>
+              <ListItemText primary={text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </Box>
+  )
+
   return (
     <>
       <StyledAppBar position="fixed">
         <Toolbar>
-          <Button color="inherit" onClick={() => navigate(-1)} startIcon={<ArrowBackIcon />}>
-            Trở về
-          </Button>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={toggleDrawer(true)}
+            sx={{ mr: 2, display: { sm: "none" } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <IconButton color="inherit" onClick={() => navigate(-1)} edge="start">
+            <ArrowBackIcon />
+          </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 2 }}>
-            Chỉnh sửa thông tin truyện
-          </Typography>
-          <Typography variant="subtitle1" sx={{ mr: 2 }}>
-            {book?.title || "Truyện chưa có tên"}
+            {book?.title || "Chỉnh sửa thông tin truyện"}
           </Typography>
           <Button color="inherit" onClick={handleCancel}>
             Hủy
           </Button>
-          <Button color="primary" variant="contained" onClick={handleSave} sx={{ ml: 1 }}>
+          <Button color="inherit" onClick={handleSave} startIcon={<SaveIcon />}>
             Lưu
           </Button>
         </Toolbar>
       </StyledAppBar>
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+        {drawerContent}
+      </Drawer>
       <ContentContainer maxWidth="lg">
         <StyledPaper>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="book edit tabs">
-            <Tab label="Chi tiết" {...a11yProps(0)} />
-            <Tab label="Mục lục" {...a11yProps(1)} />
-            <Tab label="Ghi chú" {...a11yProps(2)} />
-          </Tabs>
+          <Box sx={{ borderBottom: 1, borderColor: "divider", display: { xs: "none", sm: "block" } }}>
+            <Tabs value={tabValue} onChange={handleTabChange} aria-label="book edit tabs">
+              <Tab label="Chi tiết" {...a11yProps(0)} />
+              <Tab label="Mục lục" {...a11yProps(1)} />
+              <Tab label="Ghi chú" {...a11yProps(2)} />
+            </Tabs>
+          </Box>
           <TabPanel value={tabValue} index={0}>
-            {book && <BookDetailsComponent book={book} />}
+            {book && <BookDetailsComponent book={book} onUpdate={(updatedBook) => setBook(updatedBook)} />}
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
             <TableOfContents bookId={id} />
