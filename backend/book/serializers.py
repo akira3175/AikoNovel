@@ -1,7 +1,7 @@
 import django_filters
 from rest_framework import serializers
 from .models import *
-from contributors.serializers import AuthorSerializer
+from contributors.serializers import AuthorSerializer, TeamSerializer
 
 class CategorySerializer(serializers.ModelSerializer):
     name = django_filters.CharFilter(lookup_expr='icontains')
@@ -13,6 +13,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class BookSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True)
     categories = CategorySerializer(many=True)
+    teams = TeamSerializer(many=True)
 
     class Meta:
         model = Book

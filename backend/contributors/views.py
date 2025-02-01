@@ -49,9 +49,9 @@ class UpdatePenNameView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class CreateTranslateTeamView(APIView):
+class CreateTeamView(APIView):
     def post(self, request, *args, **kwargs):
-        serializer = TranslateTeamSerializer(data=request.data)
+        serializer = TeamSerializer(data=request.data)
         if serializer.is_valid():
             team = serializer.save()
             return Response({
@@ -69,9 +69,9 @@ class AddMemberToTeamView(APIView):
 
         try:
             user = User.objects.get(id=user_id)
-            team = TranslateTeam.objects.get(id=team_id)
+            team = Team.objects.get(id=team_id)
             role = Role.objects.get(name=role_name)
-        except (User.DoesNotExist, TranslateTeam.DoesNotExist, Role.DoesNotExist):
+        except (User.DoesNotExist, Team.DoesNotExist, Role.DoesNotExist):
             return Response({"error": "Invalid user, team, or role"}, status=status.HTTP_400_BAD_REQUEST)
 
         team_member = TeamMember.objects.create(user=user, team=team, role=role)

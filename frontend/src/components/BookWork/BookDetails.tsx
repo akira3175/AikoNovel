@@ -9,10 +9,11 @@ import {
   Box,
   IconButton,
   Autocomplete,
+  MenuItem,
+  type SelectChangeEvent,
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import AddIcon from "@mui/icons-material/Add"
@@ -22,6 +23,7 @@ import CancelIcon from "@mui/icons-material/Cancel"
 import CloseIcon from "@mui/icons-material/Close"
 import type { BookDetails as BookDetailsType, Category, BookStatus } from "../../services/book"
 import { getCategories, getBookStatuses } from "../../services/book"
+import { updateTeamForBook } from "../../services/contributors"
 import ImageUpload from "../common/ImageUpload"
 
 const StyledBox = styled(Box)(({ theme }) => ({
@@ -66,12 +68,7 @@ interface BookDetailsProps {
 
 const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [editedBook, setEditedBook] = useState<BookDetailsType>({
-    ...book,
-    categories: book.categories.map((category) =>
-      typeof category === "string" ? { id: 0, name: category, description: "" } : category,
-    ),
-  })
+  const [editedBook, setEditedBook] = useState<BookDetailsType>(book)
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [bookStatuses, setBookStatuses] = useState<BookStatus[]>([])
@@ -87,7 +84,7 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
       }
     }
     fetchData()
-  }, [])
+  }, [book.id])
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing)
@@ -101,13 +98,22 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
     setEditedBook((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedBook((prev) => ({ ...prev, status: e.target.checked ? 2 : 1 }))
+  const handleStatusChange = (e: SelectChangeEvent<number>) => {
+    setEditedBook((prev) => ({ ...prev, status: e.target.value as number }))
   }
 
-  const handleSave = () => {
-    onUpdate(editedBook)
-    setIsEditing(false)
+  const handleSave = async () => {
+    try {
+      for (const team of editedBook.teams) {
+        if (team.id !== book.teams.find((t) => t.type === team.type)?.id) {
+          await updateTeamForBook(book.id, team.id)
+        }
+      }
+      onUpdate(editedBook)
+      setIsEditing(false)
+    } catch (error) {
+      console.error("Error saving book details:", error)
+    }
   }
 
   const handleAddCategory = () => {
@@ -155,7 +161,13 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
             margin="normal"
             disabled={!isEditing}
           />
-          <TextField fullWidth label="Tác giả" value={editedBook.authors[0]?.pen_name || ""} disabled margin="normal" />
+          <TextField
+            fullWidth
+            label="Tác giả"
+            value={editedBook.authors.map((author) => author.pen_name).join(", ")}
+            disabled
+            margin="normal"
+          />
           <TextField
             fullWidth
             label="Họa sĩ"
@@ -165,7 +177,22 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
             margin="normal"
             disabled={!isEditing}
           />
-          <TextField fullWidth label="Nhóm dịch" value={editedBook.workerid.toString()} disabled margin="normal" />
+          {editedBook.teams.map((team, index) => (
+            <TextField
+              key={index}
+              fullWidth
+              label={team.type || "Nhóm"}
+              name={`team-${index}`}
+              value={team.name || ""}
+              onChange={(e) => {
+                const newTeams = [...editedBook.teams]
+                newTeams[index] = { ...newTeams[index], name: e.target.value }
+                setEditedBook((prev) => ({ ...prev, teams: newTeams }))
+              }}
+              margin="normal"
+              disabled={!isEditing}
+            />
+          ))}
           <Box mt={2} mb={2}>
             <Typography variant="subtitle1" gutterBottom>
               Thể loại
@@ -222,7 +249,7 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
               labelId="book-status-label"
               id="book-status"
               value={editedBook.status}
-              onChange={(e) => setEditedBook((prev) => ({ ...prev, status: e.target.value as number }))}
+              onChange={handleStatusChange}
               label="Trạng thái"
             >
               {bookStatuses.map((status) => (

@@ -34,7 +34,7 @@ class Book(models.Model):
         default=None,  
         related_name='books'
     )
-    workerid = models.IntegerField(default=-1, null=True)
+    teams = models.ManyToManyField(Team, through='BookTeam', related_name='books', blank=True)
     note = models.TextField(null=True)
     quantity_volome = models.IntegerField(default=0)
     date_upload = models.DateField(auto_now_add=True)
@@ -63,3 +63,15 @@ class BookAuthor(models.Model):
     def __str__(self):
         role = "Main Author" if self.is_main_author else "Co-Author"
         return f"{self.author.pen_name} ({role})"
+    
+class BookTeam(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    is_main_team = models.BooleanField(default=False)  # True: Nhóm chính, False: Nhóm phụ
+
+    class Meta:
+        unique_together = ('book', 'team')
+
+    def __str__(self):
+        role = "Nhóm chính" if self.is_main_team else "Nhóm phụ"
+        return f"{self.team.name} ({role})"

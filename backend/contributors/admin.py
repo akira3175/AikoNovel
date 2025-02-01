@@ -10,8 +10,8 @@ class RoleAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
     search_fields = ('name',)
 
-@admin.register(TranslateTeam)
-class TranslateTeamAdmin(admin.ModelAdmin):
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
     list_display = ('name',)
     filter_horizontal = ('members',)
 
@@ -20,3 +20,7 @@ class TeamMemberAdmin(admin.ModelAdmin):
     list_display = ('user', 'team', 'role')
     list_filter = ('role', 'team')
     search_fields = ('user__username', 'team__name', 'role__name')
+
+@admin.register(TeamType)
+class TeamTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)

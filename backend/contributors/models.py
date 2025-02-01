@@ -16,13 +16,26 @@ class Role(models.Model):
         return self.name
 
 
-class TranslateTeam(models.Model):
+class TeamType(models.Model):
+    name = models.CharField(max_length=255, unique=True, primary_key=True)
+    
+    def __str__(self):
+        return self.name
+
+class Team(models.Model):
     name = models.CharField(max_length=255, unique=True) 
     description = models.TextField(null=True, blank=True)
     members = models.ManyToManyField(
         User,
         through='TeamMember',
-        related_name='translate_teams'
+        related_name='teams'
+    )
+    type = models.ForeignKey(
+        TeamType, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='teams'
     )
 
     def __str__(self):
@@ -31,7 +44,7 @@ class TranslateTeam(models.Model):
 
 class TeamMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)  
-    team = models.ForeignKey(TranslateTeam, on_delete=models.CASCADE)  
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)  
     role = models.ForeignKey(Role, on_delete=models.CASCADE) 
 
     class Meta:

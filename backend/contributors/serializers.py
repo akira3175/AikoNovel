@@ -25,16 +25,16 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description']
 
 class TeamMemberSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()  # Để hiển thị tên người dùng
+    user = serializers.StringRelatedField()  
     role = RoleSerializer()
 
     class Meta:
         model = TeamMember
         fields = ['user', 'role', 'team']
 
-class TranslateTeamSerializer(serializers.ModelSerializer):
-    members = TeamMemberSerializer(many=True)
+class TeamSerializer(serializers.ModelSerializer):
+    members = TeamMemberSerializer(source='teammember_set', many=True)
 
     class Meta:
-        model = TranslateTeam
-        fields = ['id', 'name', 'description', 'members']
+        model = Team
+        fields = ['id', 'name', 'description', 'members', 'type']

@@ -1,11 +1,32 @@
 import axios from "axios"
-import { getAccessToken, refreshToken, setAuthToken } from "./auth"
+import { getAccessToken } from "./auth"
 
 const API_URL = process.env.REACT_APP_API_URL
 
 export interface Author {
   id: number
   pen_name: string
+  username: string
+}
+
+export interface Team {
+  id: number
+  name: string
+  description: string
+  members: TeamMember[]
+  type: string | null
+}
+
+export interface TeamMember {
+  user: string
+  role: Role
+  team: number
+}
+
+export interface Role {
+  id: number
+  name: string
+  description: string
 }
 
 export const registerAuthor = async (pen_name: string): Promise<Author> => {
@@ -53,6 +74,37 @@ export const updatePenName = async (pen_name: string): Promise<Author> => {
     return response.data
   } catch (error) {
     console.error("Error updating pen name:", error)
+    throw error
+  }
+}
+
+export const getTeamsByBookId = async (bookId: number): Promise<Team[]> => {
+  try {
+    const token = getAccessToken()
+    if (!token) throw new Error("No access token available")
+
+    const response = await axios.get(`${API_URL}/book/${bookId}/teams/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    console.error("Error fetching teams for book:", error)
+    throw error
+  }
+}
+
+export const updateTeamForBook = async (bookId: number, teamId: number): Promise<void> => {
+  try {
+    const token = getAccessToken()
+    if (!token) throw new Error("No access token available")
+
+    await axios.put(
+      `${API_URL}/book/${bookId}/update-team/`,
+      { team_id: teamId },
+      { headers: { Authorization: `Bearer ${token}` } },
+    )
+  } catch (error) {
+    console.error("Error updating team for book:", error)
     throw error
   }
 }
