@@ -5,13 +5,14 @@ import {
   TextField,
   Button,
   Typography,
-  Switch,
-  FormControlLabel,
   Chip,
   Box,
-  Paper,
   IconButton,
   Autocomplete,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import AddIcon from "@mui/icons-material/Add"
@@ -19,8 +20,8 @@ import EditIcon from "@mui/icons-material/Edit"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import CloseIcon from "@mui/icons-material/Close"
-import type { BookDetails as BookDetailsType, Category } from "../../services/book"
-import { getCategories } from "../../services/book"
+import type { BookDetails as BookDetailsType, Category, BookStatus } from "../../services/book"
+import { getCategories, getBookStatuses } from "../../services/book"
 import ImageUpload from "../common/ImageUpload"
 
 const StyledBox = styled(Box)(({ theme }) => ({
@@ -73,17 +74,19 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
   })
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [bookStatuses, setBookStatuses] = useState<BookStatus[]>([])
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const fetchedCategories = await getCategories()
+        const [fetchedCategories, fetchedBookStatuses] = await Promise.all([getCategories(), getBookStatuses()])
         setCategories(fetchedCategories)
+        setBookStatuses(fetchedBookStatuses)
       } catch (error) {
-        console.error("Error fetching categories:", error)
+        console.error("Error fetching data:", error)
       }
     }
-    fetchCategories()
+    fetchData()
   }, [])
 
   const handleEditToggle = () => {
@@ -139,7 +142,7 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
           <ImageUpload
             initialImage={editedBook.img || ""}
             onImageUpload={(imageUrl) => setEditedBook((prev) => ({ ...prev, img: imageUrl }))}
-            disabled={!isEditing}
+            isEditing={isEditing}
           />
         </Grid>
         <Grid item xs={12} md={8}>
@@ -213,18 +216,22 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
             margin="normal"
             disabled={!isEditing}
           />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={editedBook.status === 2}
-                onChange={handleStatusChange}
-                name="status"
-                color="primary"
-                disabled={!isEditing}
-              />
-            }
-            label={editedBook.status === 2 ? "Đã hoàn thành" : "Đang tiến hành"}
-          />
+          <FormControl fullWidth margin="normal" disabled={!isEditing}>
+            <InputLabel id="book-status-label">Trạng thái</InputLabel>
+            <Select
+              labelId="book-status-label"
+              id="book-status"
+              value={editedBook.status}
+              onChange={(e) => setEditedBook((prev) => ({ ...prev, status: e.target.value as number }))}
+              label="Trạng thái"
+            >
+              {bookStatuses.map((status) => (
+                <MenuItem key={status.id} value={status.id}>
+                  {status.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Typography variant="body2" color="textSecondary">
             Thời gian đăng: {new Date(editedBook.date_upload).toLocaleDateString()}
           </Typography>

@@ -28,7 +28,7 @@ const VolumeForm: React.FC<VolumeFormProps> = ({ open, onClose, onSave, initialT
           <TextField fullWidth label="Tiêu đề tập" value={title} onChange={(e) => setTitle(e.target.value)} />
         </Box>
         <Box my={2}>
-          <ImageUpload initialImage={imageUrl} onImageUpload={setImageUrl} />
+          <ImageUpload initialImage={imageUrl} onImageUpload={setImageUrl} isEditing={true} />
         </Box>
       </DialogContent>
       <DialogActions>

@@ -1,11 +1,22 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework import generics
+from rest_framework import generics, permissions
 from .models import *
 from .serializers import *
 from .permissions import *
 from django_filters.rest_framework import DjangoFilterBackend
+
+class BookStatusListAPIView(generics.ListAPIView):
+    serializer_class = BookStatusSerializer
+    permission_classes = [permissions.IsAuthenticated]  # hoặc thay đổi theo nhu cầu
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return BookStatus.objects.all()
+        else:
+            return BookStatus.objects.exclude(code='banned')
 
 class BookDetailView(APIView):
     """

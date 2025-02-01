@@ -33,6 +33,13 @@ export interface Category {
   description: string
 }
 
+export interface BookStatus {
+  id: number
+  name: string
+  code: string
+  description: string
+}
+
 export const createBook = async (title: string): Promise<{ id: number; title: string }> => {
   const token = getAccessToken()
   if (!token) throw new Error("No access token available")
@@ -101,6 +108,21 @@ export const getCategories = async (): Promise<Category[]> => {
     return response.data
   } catch (error) {
     console.error("Error fetching categories:", error)
+    throw error
+  }
+}
+
+export const getBookStatuses = async (): Promise<BookStatus[]> => {
+  const token = getAccessToken()
+  if (!token) throw new Error("No access token available")
+
+  try {
+    const response = await axios.get(`${API_URL}/book/bookstatus/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    console.error("Error fetching book statuses:", error)
     throw error
   }
 }

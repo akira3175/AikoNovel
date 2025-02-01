@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Book, BookAuthor, Category
+from .models import *
 from contributors.models import Author
 
 class BookAuthorInline(admin.TabularInline):
@@ -22,3 +22,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class BookAuthorAdmin(admin.ModelAdmin):
     list_display = ('book', 'author', 'is_main_author')  
     list_filter = ('is_main_author',) 
+
+@admin.register(BookStatus)
+class BookStatusAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'description')

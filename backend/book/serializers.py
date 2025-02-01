@@ -18,6 +18,11 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = '__all__'
 
+class BookStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookStatus
+        fields = ['id', 'name', 'code', 'description']
+
 class CreateBookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
