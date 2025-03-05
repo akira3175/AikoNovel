@@ -23,7 +23,6 @@ import CancelIcon from "@mui/icons-material/Cancel"
 import CloseIcon from "@mui/icons-material/Close"
 import type { BookDetails as BookDetailsType, Category, BookStatus } from "../../services/book"
 import { getCategories, getBookStatuses } from "../../services/book"
-import { updateTeamForBook } from "../../services/contributors"
 import ImageUpload from "../common/ImageUpload"
 
 const StyledBox = styled(Box)(({ theme }) => ({
@@ -84,7 +83,7 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
       }
     }
     fetchData()
-  }, [book.id])
+  }, [])
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing)
@@ -96,24 +95,17 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setEditedBook((prev) => ({ ...prev, [name]: value }))
+    console.log(book)
   }
 
   const handleStatusChange = (e: SelectChangeEvent<number>) => {
     setEditedBook((prev) => ({ ...prev, status: e.target.value as number }))
   }
 
-  const handleSave = async () => {
-    try {
-      for (const team of editedBook.teams) {
-        if (team.id !== book.teams.find((t) => t.type === team.type)?.id) {
-          await updateTeamForBook(book.id, team.id)
-        }
-      }
-      onUpdate(editedBook)
-      setIsEditing(false)
-    } catch (error) {
-      console.error("Error saving book details:", error)
-    }
+  const handleSave = () => {
+    onUpdate(editedBook)
+    setIsEditing(false)
+    console.log(book)
   }
 
   const handleAddCategory = () => {

@@ -26,7 +26,7 @@ import MenuIcon from "@mui/icons-material/Menu"
 import InfoIcon from "@mui/icons-material/Info"
 import ListIcon from "@mui/icons-material/List"
 import NoteIcon from "@mui/icons-material/Note"
-import { getBookDetails, updateBookDetails, type BookDetails } from "../services/book"
+import { getBookDetails, updateBook, type BookDetails, type UpdateBookData } from "../services/book"
 import BookDetailsComponent from "../components/BookWork/BookDetails"
 import TableOfContents from "../components/BookWork/TableOfContents"
 import Notes from "../components/BookWork/Notes"
@@ -102,7 +102,21 @@ const BookWork: React.FC = () => {
   const handleSave = async () => {
     if (book) {
       try {
-        await updateBookDetails(book)
+        const updateData: UpdateBookData = {
+          title: book.title ?? undefined,
+          description: book.description ?? undefined,
+          another_name: book.another_name ?? undefined,
+          img: book.img ?? undefined,
+          authors: book.authors.map((author) => author.id),
+          artist: book.artist ?? undefined,
+          status: book.status,
+          teams: book.teams.map((team) => team.id),
+          note: book.note ?? undefined,
+          quantity_volome: book.quantity_volome,
+          categories: book.categories.map((category) => category.id),
+        }
+        const updatedBook = await updateBook(book.id, updateData)
+        setBook(updatedBook)
         console.log("Book details saved successfully")
       } catch (error) {
         console.error("Failed to save book details:", error)

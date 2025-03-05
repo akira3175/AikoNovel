@@ -21,7 +21,7 @@ import EditIcon from "@mui/icons-material/Edit"
 import CameraAltIcon from "@mui/icons-material/CameraAlt"
 import { fetchProfile, updateFullName, updateAvatar, updateBackground, type ProfileData } from "../services/profile"
 import { useAuth } from "../contexts/AuthContext"
-import Groups from "../components/profile/Groups"
+import Groups from "../components/Profile/Groups"
 import { GradientCircularProgress } from "../components/ui/GradientCircularProgress"
 import NotFound from "../pages/NotFound"
 

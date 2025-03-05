@@ -1,15 +1,8 @@
 import axios from "axios"
 import { getAccessToken, refreshToken, setAuthToken } from "./auth"
+import { ProfileData } from "../types/profile"
 
 const API_URL = process.env.REACT_APP_API_URL
-
-export interface ProfileData {
-  username: string
-  full_name: string
-  img_avatar: string | null
-  img_background: string | null
-  img_background_position: number
-}
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

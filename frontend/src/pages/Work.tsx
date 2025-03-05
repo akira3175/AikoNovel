@@ -24,7 +24,7 @@ import SearchBar from "../components/ui/SearchBar"
 import { useAuth } from "../contexts/AuthContext"
 import { registerAuthor, getPenName, updatePenName } from "../services/contributors"
 import { createBook, getAuthorBooks, type BookDetails } from "../services/book"
-import BookManagementDropdown from "../components/work/BookManagementDropdown"
+import BookManagementDropdown from "../components/Work/BookManagementDropdown"
 
 const WorkContainer = styled(Container)(({ theme }) => ({
   minHeight: "100vh",

@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics, permissions
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import *
 from .serializers import *
 from .permissions import *
@@ -85,21 +87,16 @@ class CreateBookByLeaderView(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UpdateBookView(APIView):
-    def put(self, request, book_id, *args, **kwargs):
-        try:
-            book = Book.objects.get(id=book_id)
-        except Book.DoesNotExist:
-            return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UpdateBookSerializer(book, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Book updated successfully"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['name']
+class BookPartialUpdateView(generics.UpdateAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookUpdateSerializer
+    permission_classes = [IsAuthenticated]  
+    http_method_names = ['patch'] 
+    parser_classes = [MultiPartParser, FormParser, JSONParser]

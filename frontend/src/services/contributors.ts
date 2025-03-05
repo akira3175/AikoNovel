@@ -1,33 +1,10 @@
 import axios from "axios"
 import { getAccessToken } from "./auth"
+import { Author, Team, TeamMember, Role } from "../types/contributors"
 
 const API_URL = process.env.REACT_APP_API_URL
 
-export interface Author {
-  id: number
-  pen_name: string
-  username: string
-}
 
-export interface Team {
-  id: number
-  name: string
-  description: string
-  members: TeamMember[]
-  type: string | null
-}
-
-export interface TeamMember {
-  user: string
-  role: Role
-  team: number
-}
-
-export interface Role {
-  id: number
-  name: string
-  description: string
-}
 
 export const registerAuthor = async (pen_name: string): Promise<Author> => {
   try {

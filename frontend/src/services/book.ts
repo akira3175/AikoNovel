@@ -35,6 +35,20 @@ export interface BookStatus {
   description: string
 }
 
+export interface UpdateBookData {
+  title?: string
+  description?: string
+  another_name?: string
+  img?: string
+  authors?: number[]
+  artist?: string
+  status?: number
+  teams?: number[]
+  note?: string
+  quantity_volome?: number
+  categories?: number[]
+}
+
 export const createBook = async (title: string): Promise<{ id: number; title: string }> => {
   const token = getAccessToken()
   if (!token) throw new Error("No access token available")
@@ -118,6 +132,22 @@ export const getBookStatuses = async (): Promise<BookStatus[]> => {
     return response.data
   } catch (error) {
     console.error("Error fetching book statuses:", error)
+    throw error
+  }
+}
+
+export const updateBook = async (bookId: number, updateData: UpdateBookData): Promise<BookDetails> => {
+  const token = getAccessToken()
+  if (!token) throw new Error("No access token available")
+
+    console.log(updateData)
+  try {
+    const response = await axios.patch(`${API_URL}/book/update-book/${bookId}/`, updateData, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    console.error("Error updating book:", error)
     throw error
   }
 }

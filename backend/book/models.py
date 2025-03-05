@@ -46,7 +46,6 @@ class Book(models.Model):
         return self.title or "Unnamed Book"
 
     def save(self, *args, **kwargs):
-
         if not self.status:
             self.status = BookStatus.objects.filter(code='ongoing').first()
         super().save(*args, **kwargs)
