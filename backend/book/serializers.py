@@ -4,6 +4,41 @@ from .models import *
 from contributors.serializers import AuthorSerializer, TeamSerializer
 from backend.image_utils import is_base64_string, save_base64_image
 
+class ChapterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chapter
+        fields = ['id', 'title', 'date_upload']
+
+class VolumeSerializer(serializers.ModelSerializer):
+    chapters = ChapterSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Volume
+        fields = ['id', 'title', 'date_upload', 'chapters', 'book', 'img']
+
+class CreateVolumeSerializer(serializers.ModelSerializer):
+    img = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = Volume
+        fields = ['title', 'img', 'book'] 
+    
+    def create(self, validated_data):
+        img_data = validated_data.get('img', None)
+        if img_data:
+            if isinstance(img_data, str):
+                if img_data.startswith('http'):
+                    # Nếu img là URL, lưu trực tiếp
+                    validated_data['img'] = img_data
+                elif is_base64_string(img_data):
+                    # Nếu img là base64, lưu ảnh từ base64
+                    image_file = save_base64_image(img_data)
+                    validated_data['img'] = upload_image_to_imgur(image_file)  # Giả sử upload lên Imgur
+                else:
+                    raise serializers.ValidationError("Invalid image data format.")
+
+        return Volume.objects.create(**validated_data)
+
 class CategorySerializer(serializers.ModelSerializer):
     name = django_filters.CharFilter(lookup_expr='icontains')
 
@@ -15,6 +50,7 @@ class BookSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True)
     categories = CategorySerializer(many=True)
     teams = TeamSerializer(many=True)
+    volumes = VolumeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Book

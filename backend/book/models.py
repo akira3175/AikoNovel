@@ -2,6 +2,7 @@ from django.db import models
 from backend.imgur_utils import upload_image_to_imgur
 from django.utils.timezone import now
 from contributors.models import *
+from ckeditor.fields import RichTextField
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -74,3 +75,29 @@ class BookTeam(models.Model):
     def __str__(self):
         role = "Nhóm chính" if self.is_main_team else "Nhóm phụ"
         return f"{self.team.name} ({role})"
+    
+class Volume(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="volumes")
+    title = models.CharField(max_length=200)
+    img = models.URLField(null=True, blank=True, default='https://i.imgur.com/OJbZSFy.jpeg') 
+    date_upload = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.book.title} - {self.title}"
+
+
+
+class Chapter(models.Model):
+    volume = models.ForeignKey(Volume, on_delete=models.CASCADE, related_name="chapters")
+    title = models.CharField(max_length=200)
+    number = models.FloatField()
+    content = RichTextField()
+    date_upload = models.DateField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('volume', 'number')
+        ordering = ['number']
+        
+    def __str__(self):
+        return f"{self.volume.book.title} - {self.volume.title} - Chap {self.number}"
+

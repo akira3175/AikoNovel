@@ -18,10 +18,9 @@ import {
 import { styled } from "@mui/material/styles"
 import AddIcon from "@mui/icons-material/Add"
 import EditIcon from "@mui/icons-material/Edit"
-import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import CloseIcon from "@mui/icons-material/Close"
-import type { BookDetails as BookDetailsType, Category, BookStatus } from "../../services/book"
+import type { BookDetails as BookDetailsType, Category, BookStatus } from "../../types/book"
 import { getCategories, getBookStatuses } from "../../services/book"
 import ImageUpload from "../common/ImageUpload"
 
@@ -85,27 +84,30 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
     fetchData()
   }, [])
 
+  useEffect(() => {
+    // Update parent component whenever editedBook changes
+    if (isEditing) {
+      onUpdate(editedBook)
+    }
+  }, [editedBook, isEditing, onUpdate])
+
   const handleEditToggle = () => {
     setIsEditing(!isEditing)
     if (!isEditing) {
       setEditedBook(book)
+    } else {
+      // When exiting edit mode, ensure the parent has the latest data
+      onUpdate(editedBook)
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setEditedBook((prev) => ({ ...prev, [name]: value }))
-    console.log(book)
   }
 
   const handleStatusChange = (e: SelectChangeEvent<number>) => {
     setEditedBook((prev) => ({ ...prev, status: e.target.value as number }))
-  }
-
-  const handleSave = () => {
-    onUpdate(editedBook)
-    setIsEditing(false)
-    console.log(book)
   }
 
   const handleAddCategory = () => {
@@ -256,13 +258,6 @@ const BookDetailsComponent: React.FC<BookDetailsProps> = ({ book, onUpdate }) =>
           </Typography>
         </Grid>
       </Grid>
-      {isEditing && (
-        <Box mt={2} display="flex" justifyContent="flex-end">
-          <Button variant="contained" color="primary" startIcon={<SaveIcon />} onClick={handleSave}>
-            Lưu thay đổi
-          </Button>
-        </Box>
-      )}
     </StyledBox>
   )
 }

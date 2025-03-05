@@ -35,3 +35,7 @@ class BookTeamAdmin(admin.ModelAdmin):
 @admin.register(BookStatus)
 class BookStatusAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'description')
+
+@admin.register(Volume)
+class VolumeAdmin(admin.ModelAdmin):
+    list_display = ('title', 'book')

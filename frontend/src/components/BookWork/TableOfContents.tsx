@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
 import {
@@ -6,7 +8,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   TextField,
   Box,
@@ -15,6 +16,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Stack,
+  ListItemSecondaryAction,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
@@ -22,9 +25,13 @@ import EditIcon from "@mui/icons-material/Edit"
 import DeleteIcon from "@mui/icons-material/Delete"
 import AddIcon from "@mui/icons-material/Add"
 import VolumeForm from "./VolumeForm"
+import { createVolume } from "../../services/book"
+import type { BookDetails, Volume } from "../../types/book"
 
 interface TableOfContentsProps {
   bookId: string | undefined
+  book: BookDetails | null
+  onVolumeAdded: (volume: Volume) => void
 }
 
 const StyledBox = styled(Box)(({ theme }) => ({
@@ -57,7 +64,7 @@ const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
   },
-  justifyContent: "space-between",
+  justifyContent: "space-between", // Align title left, buttons right
 }))
 
 const StyledAccordionDetails = styled(AccordionDetails)(({ theme }) => ({
@@ -67,43 +74,29 @@ const StyledAccordionDetails = styled(AccordionDetails)(({ theme }) => ({
   borderBottomRightRadius: "8px",
 }))
 
-interface Volume {
-  id: number
-  title: string
-  imageUrl: string
-  chapters: { id: number; title: string; date: string }[]
-}
-
-const TableOfContents: React.FC<TableOfContentsProps> = ({ bookId }) => {
-  const [volumes, setVolumes] = useState<Volume[]>([
-    {
-      id: 1,
-      title: "Tập 1",
-      imageUrl: "/placeholder.svg",
-      chapters: [
-        { id: 1, title: "Chương 1: Khởi đầu", date: "01/01/2023" },
-        { id: 2, title: "Chương 2: Cuộc phiêu lưu", date: "05/01/2023" },
-      ],
-    },
-    {
-      id: 2,
-      title: "Tập 2",
-      imageUrl: "/placeholder.svg",
-      chapters: [{ id: 3, title: "Chương 1: Hành trình mới", date: "10/01/2023" }],
-    },
-  ])
+const TableOfContents: React.FC<TableOfContentsProps> = ({ bookId, book, onVolumeAdded }) => {
   const [expandedVolume, setExpandedVolume] = useState<number | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState("")
   const [addingChapter, setAddingChapter] = useState<number | null>(null)
   const [volumeFormOpen, setVolumeFormOpen] = useState(false)
   const [editingVolume, setEditingVolume] = useState<Volume | null>(null)
 
+  const volumes = book?.volumes || []
+
   const handleVolumeToggle = (volumeId: number) => {
     setExpandedVolume(expandedVolume === volumeId ? null : volumeId)
   }
 
-  const handleAddVolume = (title: string, imageUrl: string) => {
-    setVolumes([...volumes, { id: volumes.length + 1, title, imageUrl, chapters: [] }])
+  const handleAddVolume = async (title: string, imageUrl: string) => {
+    if (!bookId) return
+
+    try {
+      const newVolume = await createVolume(Number.parseInt(bookId), title, imageUrl)
+      onVolumeAdded(newVolume)
+    } catch (error) {
+      console.error("Failed to create volume:", error)
+      // You might want to show an error notification here
+    }
   }
 
   const handleEditVolume = (volume: Volume) => {
@@ -113,34 +106,25 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ bookId }) => {
 
   const handleUpdateVolume = (title: string, imageUrl: string) => {
     if (editingVolume) {
-      setVolumes(volumes.map((v) => (v.id === editingVolume.id ? { ...v, title, imageUrl } : v)))
+      try {
+        // Here you would call an API to update the volume
+        // For now, we'll just update the local state
+        // This would need to be implemented with an API call and state update in the parent
+      } catch (error) {
+        console.error("Failed to update volume:", error)
+      }
     }
     setEditingVolume(null)
   }
 
   const handleDeleteVolume = (volumeId: number) => {
-    setVolumes(volumes.filter((v) => v.id !== volumeId))
+    // Here you would call an API to delete the volume
+    // This would need to be implemented with an API call and state update in the parent
   }
 
   const handleAddChapter = (volumeId: number) => {
     if (newChapterTitle.trim()) {
-      setVolumes(
-        volumes.map((volume) =>
-          volume.id === volumeId
-            ? {
-                ...volume,
-                chapters: [
-                  ...volume.chapters,
-                  {
-                    id: volume.chapters.length + 1,
-                    title: newChapterTitle,
-                    date: new Date().toLocaleDateString(),
-                  },
-                ],
-              }
-            : volume,
-        ),
-      )
+      // This would need to be implemented with an API call and state update in the parent
       setNewChapterTitle("")
       setAddingChapter(null)
     }
@@ -157,88 +141,109 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ bookId }) => {
         </Button>
       </Box>
       <Divider sx={{ mb: 3 }} />
-      {volumes.map((volume) => (
-        <StyledAccordion key={volume.id} expanded={expandedVolume === volume.id}>
-          <StyledAccordionSummary expandIcon={<ExpandMoreIcon />} onClick={() => handleVolumeToggle(volume.id)}>
-            <Typography variant="h6">{volume.title}</Typography>
-            <Box>
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleEditVolume(volume)
-                }}
-              >
-                <EditIcon />
-              </IconButton>
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleDeleteVolume(volume.id)
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          </StyledAccordionSummary>
-          <StyledAccordionDetails>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={3}>
-                <VolumeImage src={volume.imageUrl || "/placeholder.svg"} alt={volume.title} />
-              </Grid>
-              <Grid item xs={12} md={9}>
-                <List>
-                  {volume.chapters.map((chapter) => (
-                    <ListItem key={chapter.id}>
-                      <ListItemText primary={chapter.title} secondary={`Ngày đăng: ${chapter.date}`} />
-                      <ListItemSecondaryAction>
-                        <IconButton edge="end" aria-label="edit">
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton edge="end" aria-label="delete">
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-                {addingChapter === volume.id ? (
-                  <Box display="flex" alignItems="center" mt={2}>
-                    <TextField
-                      value={newChapterTitle}
-                      onChange={(e) => setNewChapterTitle(e.target.value)}
-                      placeholder="Nhập tên chương mới"
+      {volumes.length === 0 ? (
+        <Typography variant="body1" align="center" py={4}>
+          Chưa có tập nào. Hãy thêm tập mới để bắt đầu.
+        </Typography>
+      ) : (
+        volumes.map((volume) => (
+          <StyledAccordion
+            key={volume.id}
+            expanded={expandedVolume === volume.id}
+            onChange={() => handleVolumeToggle(volume.id)}
+          >
+            <StyledAccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h6">{volume.title}</Typography>
+              <Stack direction="row" spacing={1}>
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEditVolume(volume)
+                  }}
+                  edge="end"
+                  aria-label="edit"
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeleteVolume(volume.id)
+                  }}
+                  edge="end"
+                  aria-label="delete"
+                  color="error"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Stack>
+            </StyledAccordionSummary>
+            <StyledAccordionDetails>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                  <VolumeImage src={volume.img || "/placeholder.svg"} alt={volume.title} />
+                </Grid>
+                <Grid item xs={12} md={8}>
+                  {volume.chapters && volume.chapters.length > 0 ? (
+                    <List>
+                      {volume.chapters.map((chapter) => (
+                        <ListItem key={chapter.id}>
+                          <ListItemText primary={chapter.title} secondary={`Ngày đăng: ${chapter.date_upload}`} />
+                          <ListItemSecondaryAction>
+                            <IconButton edge="end" aria-label="edit">
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton edge="end" aria-label="delete">
+                              <DeleteIcon />
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography variant="body2" color="textSecondary" py={2}>
+                      Chưa có chương nào trong tập này.
+                    </Typography>
+                  )}
+                  {addingChapter === volume.id ? (
+                    <Box display="flex" alignItems="center" mt={2}>
+                      <TextField
+                        value={newChapterTitle}
+                        onChange={(e) => setNewChapterTitle(e.target.value)}
+                        placeholder="Nhập tên chương mới"
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                      />
+                      <Button
+                        onClick={() => handleAddChapter(volume.id)}
+                        variant="contained"
+                        color="primary"
+                        sx={{ ml: 1 }}
+                      >
+                        Thêm
+                      </Button>
+                      <Button onClick={() => setAddingChapter(null)} variant="outlined" sx={{ ml: 1 }}>
+                        Hủy
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={() => setAddingChapter(volume.id)}
                       fullWidth
                       variant="outlined"
-                      size="small"
-                    />
-                    <Button
-                      onClick={() => handleAddChapter(volume.id)}
-                      variant="contained"
-                      color="primary"
-                      sx={{ ml: 1 }}
+                      sx={{ mt: 2 }}
                     >
-                      Thêm
+                      Thêm chương mới
                     </Button>
-                    <Button onClick={() => setAddingChapter(null)} variant="outlined" sx={{ ml: 1 }}>
-                      Hủy
-                    </Button>
-                  </Box>
-                ) : (
-                  <Button
-                    startIcon={<AddIcon />}
-                    onClick={() => setAddingChapter(volume.id)}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mt: 2 }}
-                  >
-                    Thêm chương mới
-                  </Button>
-                )}
+                  )}
+                </Grid>
               </Grid>
-            </Grid>
-          </StyledAccordionDetails>
-        </StyledAccordion>
-      ))}
+            </StyledAccordionDetails>
+          </StyledAccordion>
+        ))
+      )}
       <VolumeForm
         open={volumeFormOpen}
         onClose={() => {
@@ -247,7 +252,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ bookId }) => {
         }}
         onSave={editingVolume ? handleUpdateVolume : handleAddVolume}
         initialTitle={editingVolume?.title}
-        initialImage={editingVolume?.imageUrl}
+        initialImage={editingVolume?.img}
       />
     </StyledBox>
   )

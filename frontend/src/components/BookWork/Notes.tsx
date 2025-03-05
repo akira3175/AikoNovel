@@ -1,17 +1,26 @@
+"use client"
+
 import type React from "react"
-import { useState } from "react"
-import { TextField, Button, Box } from "@mui/material"
+import { useState, useEffect } from "react"
+import { TextField, Box } from "@mui/material"
 
 interface NotesProps {
   bookId: string | undefined
+  onNoteChange: (note: string) => void
+  initialNote?: string
 }
 
-const Notes: React.FC<NotesProps> = ({ bookId }) => {
-  const [note, setNote] = useState("")
+const Notes: React.FC<NotesProps> = ({ bookId, onNoteChange, initialNote = "" }) => {
+  const [note, setNote] = useState(initialNote)
 
-  const handleSaveNote = () => {
-    // Implement save note functionality
-    console.log("Saving note for book:", bookId)
+  useEffect(() => {
+    setNote(initialNote)
+  }, [initialNote])
+
+  const handleNoteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newNote = e.target.value
+    setNote(newNote)
+    onNoteChange(newNote)
   }
 
   return (
@@ -21,14 +30,11 @@ const Notes: React.FC<NotesProps> = ({ bookId }) => {
         multiline
         rows={10}
         value={note}
-        onChange={(e) => setNote(e.target.value)}
+        onChange={handleNoteChange}
         placeholder="Nhập ghi chú của bạn ở đây..."
         variant="outlined"
         margin="normal"
       />
-      <Button variant="contained" color="primary" onClick={handleSaveNote}>
-        Lưu ghi chú
-      </Button>
     </Box>
   )
 }

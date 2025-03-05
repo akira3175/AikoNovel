@@ -23,7 +23,8 @@ import EditIcon from "@mui/icons-material/Edit"
 import SearchBar from "../components/ui/SearchBar"
 import { useAuth } from "../contexts/AuthContext"
 import { registerAuthor, getPenName, updatePenName } from "../services/contributors"
-import { createBook, getAuthorBooks, type BookDetails } from "../services/book"
+import { createBook, getAuthorBooks } from "../services/book"
+import { BookDetails } from "../types/book"
 import BookManagementDropdown from "../components/Work/BookManagementDropdown"
 
 const WorkContainer = styled(Container)(({ theme }) => ({

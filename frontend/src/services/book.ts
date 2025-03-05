@@ -1,53 +1,8 @@
 import axios from "axios"
 import { getAccessToken } from "./auth"
-import type { Team, Author } from "./contributors"
+import { BookDetails, Category, BookStatus, UpdateBookData, Volume, Chapter } from "../types/book"
 
 const API_URL = process.env.REACT_APP_API_URL
-
-export interface BookDetails {
-  id: number
-  authors: Author[]
-  categories: Category[]
-  teams: Team[]
-  title: string | null
-  description: string | null
-  another_name: string | null
-  img: string | null
-  artist: string | null
-  note: string | null
-  quantity_volome: number
-  date_upload: string
-  date_update: string
-  is_deleted: boolean
-  status: number
-}
-
-export interface Category {
-  id: number
-  name: string
-  description: string
-}
-
-export interface BookStatus {
-  id: number
-  name: string
-  code: string
-  description: string
-}
-
-export interface UpdateBookData {
-  title?: string
-  description?: string
-  another_name?: string
-  img?: string
-  authors?: number[]
-  artist?: string
-  status?: number
-  teams?: number[]
-  note?: string
-  quantity_volome?: number
-  categories?: number[]
-}
 
 export const createBook = async (title: string): Promise<{ id: number; title: string }> => {
   const token = getAccessToken()
@@ -152,3 +107,21 @@ export const updateBook = async (bookId: number, updateData: UpdateBookData): Pr
   }
 }
 
+export const createVolume = async (bookId: number, title: string, img: string = ""): Promise<Volume> => {
+  const token = getAccessToken();
+  if (!token) throw new Error("No access token available");
+
+  console.log(title)
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/book/create-volume/`,
+      { book: bookId, title, img },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating volume:", error);
+    throw error;
+  }
+};

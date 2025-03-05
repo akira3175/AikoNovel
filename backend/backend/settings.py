@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'ckeditor',
+    'ckeditor_uploader',
     'user',
     'book',
     'contributors',
@@ -150,3 +152,25 @@ REST_FRAMEWORK = {
             'rest_framework.parsers.MultiPartParser',
     ),
 }
+
+# Ckeditor settings
+CKEDITOR_UPLOAD_PATH = "uploads/"
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full', 
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ','.join([
+            'uploadimage', 
+            'autogrow',
+            'codesnippet',
+        ]),
+        'filebrowserUploadMethod': 'form',
+        'filebrowserUploadUrl': '/upload/',
+    }
+}
+
+# Medie UI settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

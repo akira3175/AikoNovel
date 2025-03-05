@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
@@ -18,6 +20,8 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
+  Snackbar,
+  Alert,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
@@ -26,7 +30,8 @@ import MenuIcon from "@mui/icons-material/Menu"
 import InfoIcon from "@mui/icons-material/Info"
 import ListIcon from "@mui/icons-material/List"
 import NoteIcon from "@mui/icons-material/Note"
-import { getBookDetails, updateBook, type BookDetails, type UpdateBookData } from "../services/book"
+import { getBookDetails, updateBook } from "../services/book"
+import { BookDetails, UpdateBookData } from "../types/book"
 import BookDetailsComponent from "../components/BookWork/BookDetails"
 import TableOfContents from "../components/BookWork/TableOfContents"
 import Notes from "../components/BookWork/Notes"
@@ -78,8 +83,19 @@ const BookWork: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [book, setBook] = useState<BookDetails | null>(null)
+  const [editedBook, setEditedBook] = useState<BookDetails | null>(null)
+  const [bookNote, setBookNote] = useState<string>("")
   const [tabValue, setTabValue] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [notification, setNotification] = useState<{
+    open: boolean
+    message: string
+    severity: "success" | "error"
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  })
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -87,8 +103,11 @@ const BookWork: React.FC = () => {
         try {
           const details = await getBookDetails(Number.parseInt(id))
           setBook(details)
+          setEditedBook(details)
+          setBookNote(details.note || "")
         } catch (error) {
           console.error("Failed to fetch book details:", error)
+          showNotification("Failed to fetch book details", "error")
         }
       }
     }
@@ -99,30 +118,57 @@ const BookWork: React.FC = () => {
     setTabValue(newValue)
   }
 
+  const handleBookUpdate = (updatedBook: BookDetails) => {
+    setEditedBook(updatedBook)
+  }
+
+  const handleNoteChange = (note: string) => {
+    setBookNote(note)
+  }
+
+  const showNotification = (message: string, severity: "success" | "error") => {
+    setNotification({
+      open: true,
+      message,
+      severity,
+    })
+  }
+
+  const handleCloseNotification = () => {
+    setNotification({
+      ...notification,
+      open: false,
+    })
+  }
+
   const handleSave = async () => {
-    if (book) {
+    if (book && editedBook) {
       try {
         const updateData: UpdateBookData = {
-          title: book.title ?? undefined,
-          description: book.description ?? undefined,
-          another_name: book.another_name ?? undefined,
-          img: book.img ?? undefined,
-          authors: book.authors.map((author) => author.id),
-          artist: book.artist ?? undefined,
-          status: book.status,
-          teams: book.teams.map((team) => team.id),
-          note: book.note ?? undefined,
-          quantity_volome: book.quantity_volome,
-          categories: book.categories.map((category) => category.id),
+          title: editedBook.title || "",
+          description: editedBook.description || "",
+          another_name: editedBook.another_name || "",
+          img: editedBook.img || "",
+          authors: editedBook.authors.map((author) => author.id),
+          artist: editedBook.artist || "",
+          status: editedBook.status,
+          teams: editedBook.teams.map((team) => team.id),
+          note: bookNote,
+          quantity_volome: editedBook.quantity_volome,
+          categories: editedBook.categories.map((category) => category.id),
         }
+
         const updatedBook = await updateBook(book.id, updateData)
         setBook(updatedBook)
-        console.log("Book details saved successfully")
+        setEditedBook(updatedBook)
+        showNotification("Book details saved successfully", "success")
       } catch (error) {
         console.error("Failed to save book details:", error)
+        showNotification("Failed to save book details", "error")
       }
     }
   }
+
 
   const handleCancel = () => {
     navigate(-1)
@@ -193,16 +239,37 @@ const BookWork: React.FC = () => {
             </Tabs>
           </Box>
           <TabPanel value={tabValue} index={0}>
-            {book && <BookDetailsComponent book={book} onUpdate={(updatedBook) => setBook(updatedBook)} />}
+            {book && editedBook && <BookDetailsComponent book={editedBook} onUpdate={handleBookUpdate} />}
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
-            <TableOfContents bookId={id} />
+            <TableOfContents
+              bookId={id}
+              book={book}
+              onVolumeAdded={(newVolume) => {
+                if (book) {
+                  setBook({
+                    ...book,
+                    volumes: [...(book.volumes || []), newVolume],
+                  })
+                }
+              }}
+            />
           </TabPanel>
           <TabPanel value={tabValue} index={2}>
-            <Notes bookId={id} />
+            <Notes bookId={id} onNoteChange={handleNoteChange} initialNote={book?.note || ""} />
           </TabPanel>
         </StyledPaper>
       </ContentContainer>
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseNotification} severity={notification.severity}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </>
   )
 }
